@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Package Release
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Install system dependencies (GTK4 & packaging)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-4-dev \
+            pkg-config \
+            gcc \
+            dpkg-dev
+
+      - name: Run unit tests
+        run: go test -v ./...
+
+      - name: Extract version
+        id: vars
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v0.1.0"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "clean_version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Build Debian package (.deb)
+        run: |
+          ./scripts/package-deb.sh "${{ steps.vars.outputs.version }}"
+
+      - name: Build standalone binaries tarball (.tar.gz)
+        run: |
+          CLEAN_VER="${{ steps.vars.outputs.clean_version }}"
+          TAR_DIR="dist/tar"
+          mkdir -p "${TAR_DIR}"
+          # Localiza os binários gerados pelo build do deb
+          find build/deb -type f -name "nuvem" -exec cp {} "${TAR_DIR}/" \;
+          find build/deb -type f -name "nuvem-desktop" -exec cp {} "${TAR_DIR}/" \;
+          tar -czvf "dist/nuvem_${CLEAN_VER}_linux_amd64.tar.gz" -C "${TAR_DIR}" nuvem nuvem-desktop
+          rm -rf "${TAR_DIR}"
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd dist
+          sha256sum nuvem_* > checksums.txt
+          cat checksums.txt
+          cd ..
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/*.deb
+            dist/*.tar.gz
+            dist/checksums.txt
+          generate_release_notes: true

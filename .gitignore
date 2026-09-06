@@ -11,6 +11,8 @@ logs/
 
 # Go build output and coverage
 bin/
+build/
+dist/
 coverage.out
 *.test
 
