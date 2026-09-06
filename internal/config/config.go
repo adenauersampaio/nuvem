@@ -12,14 +12,25 @@ import (
 const CurrentVersion = 1
 
 type Config struct {
-	Version int        `json:"version"`
-	Sync    SyncConfig `json:"sync"`
+	Version     int               `json:"version"`
+	Sync        SyncConfig        `json:"sync"`
+	GoogleDrive GoogleDriveConfig `json:"google_drive,omitempty"`
+}
+
+// GoogleDriveConfig contains credentials for the application's own OAuth
+// client. Config files are created with owner-only permissions.
+type GoogleDriveConfig struct {
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
+	Token        string `json:"token,omitempty"`
+	RootFolderID string `json:"root_folder_id,omitempty"`
 }
 
 type SyncConfig struct {
 	LocalPath string        `json:"local_path"`
 	Remote    string        `json:"remote"`
 	Interval  time.Duration `json:"interval"`
+	Engine    string        `json:"engine,omitempty"`
 }
 
 func DefaultPath() (string, error) {
@@ -106,6 +117,9 @@ func (c Config) Validate() error {
 	}
 	if c.Sync.Interval < 15*time.Second {
 		return errors.New("o intervalo mínimo é de 15 segundos")
+	}
+	if c.Sync.Engine != "" && c.Sync.Engine != "embedded" && c.Sync.Engine != "native" {
+		return fmt.Errorf("motor de sincronização desconhecido: %s", c.Sync.Engine)
 	}
 	return nil
 }

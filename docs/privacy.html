@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidade - Nuvem</title>
+  <meta name="description" content="Política de Privacidade do aplicativo desktop Nuvem para sincronização com Google Drive.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z%22/></svg>">
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="logo-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+        </svg>
+        <span>Nuvem</span>
+      </a>
+      <nav>
+        <ul>
+          <li><a href="index.html">Início</a></li>
+          <li><a href="privacy.html" class="active">Privacidade</a></li>
+          <li><a href="terms.html">Termos</a></li>
+          <li><a href="https://github.com/adenauersampaio/nuvem" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="content-box">
+      <h1>Política de Privacidade do Nuvem</h1>
+      <span class="meta-date">Última atualização: 6 de setembro de 2026</span>
+
+      <p>
+        Esta Política de Privacidade descreve como o aplicativo desktop <strong>Nuvem</strong> 
+        ("nós", "nosso" ou "aplicativo") gerencia, acessa, armazena e protege as suas informações 
+        ao sincronizar seus arquivos locais com o Google Drive.
+      </p>
+
+      <h2>1. Natureza do Aplicativo</h2>
+      <p>
+        O <strong>Nuvem</strong> é um software desktop de código aberto para sistemas operacionais Linux. 
+        Ele opera como um cliente direto entre o seu computador pessoal e a sua conta no Google Drive. 
+        <strong>Não operamos servidores intermediários, bancos de dados em nuvem próprios ou centrais de coleta de dados.</strong>
+      </p>
+
+      <h2>2. Dados Acessados das APIs do Google</h2>
+      <p>
+        Ao conectar o Nuvem à sua conta do Google, o aplicativo solicita autorização OAuth 2.0 estritamente limitada através do seguinte escopo:
+      </p>
+      <ul>
+        <li>
+          <code>https://www.googleapis.com/auth/drive.file</code> (Ver, criar e editar arquivos que você seleciona ou cria com este app).
+        </li>
+      </ul>
+      <p>
+        <strong>Acesso restrito e explícito:</strong> O Nuvem <em>não</em> solicita acesso amplo ou irrestrito a todo o seu Google Drive. 
+        Em conjunto com o seletor oficial do Google (Google Picker), o Nuvem só tem autorização para visualizar, transferir e gerenciar 
+        os arquivos contidos na pasta específica que você escolheu deliberadamente para sincronização.
+      </p>
+
+      <h2>3. Como Usamos as Informações</h2>
+      <p>
+        As informações e permissões obtidas são utilizadas única e exclusivamente para a finalidade primordial do aplicativo:
+      </p>
+      <ul>
+        <li>Estabelecer a conexão segura via protocolo OAuth 2.0 padrão da Google;</li>
+        <li>Sincronizar bidirecionalmente arquivos entre a pasta local designada em seu disco e a pasta correspondente no Google Drive;</li>
+        <li>Manter o controle de versões modificadas e resolver conflitos de sincronização localmente.</li>
+      </ul>
+
+      <h2>4. Armazenamento e Retenção de Dados</h2>
+      <p>
+        Todas as credenciais de autenticação, chaves de acesso (tokens OAuth) e preferências de sincronização 
+        são salvas <strong>exclusivamente de forma local no seu próprio computador</strong>, no arquivo de configuração 
+        do usuário (<code>~/.config/nuvem/config.json</code>), com permissões restritas de leitura atribuídas apenas à sua conta local.
+      </p>
+      <p>
+        Nenhum token, arquivo, metadado ou chave é enviado a qualquer servidor ou serviço que não sejam os endpoints oficiais de API da Google 
+        (como <code>accounts.google.com</code>, <code>oauth2.googleapis.com</code> e <code>www.googleapis.com</code>).
+      </p>
+
+      <h2>5. Compartilhamento e Divulgação de Dados</h2>
+      <p>
+        O Nuvem adota uma política rigorosa de não compartilhamento:
+      </p>
+      <ul>
+        <li><strong>Sem compartilhamento com terceiros:</strong> Não compartilhamos, vendemos, licenciamos ou alugamos dados de usuários ou arquivos para qualquer terceiro.</li>
+        <li><strong>Sem publicidade:</strong> Não utilizamos seus dados ou arquivos para personalização de anúncios ou monetização de marketing.</li>
+        <li><strong>Sem treinamento de modelos de Inteligência Artificial:</strong> O conteúdo dos seus arquivos e dados jamais é utilizado para treinar modelos de inteligência artificial ou machine learning.</li>
+      </ul>
+
+      <h2>6. Conformidade com a Política de Dados do Usuário do Google (Limited Use)</h2>
+      <div class="highlight-box">
+        <p>
+          O uso e a transferência de informações recebidas das APIs do Google pelo Nuvem para qualquer outro aplicativo estarão em conformidade com a 
+          <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">
+            Política de Dados do Usuário dos Serviços de API do Google
+          </a>, incluindo os requisitos de Uso Limitado (Limited Use requirements).
+        </p>
+      </div>
+      <p><em>(Declaration in English for Google Verification compliance):</em></p>
+      <blockquote style="font-style: italic; color: var(--text-secondary); margin: 0.5rem 0 1.5rem 1.5rem; border-left: 2px solid var(--border-color); padding-left: 1rem;">
+        "Nuvem's use and transfer to any other app of information received from Google APIs will adhere to 
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, 
+        including the Limited Use requirements."
+      </blockquote>
+
+      <h2>7. Como Revogar o Acesso e Excluir Dados</h2>
+      <p>
+        Você tem controle total sobre o acesso concedido ao Nuvem a qualquer momento:
+      </p>
+      <ul>
+        <li>
+          <strong>Remoção Local:</strong> Você pode desconectar sua conta pela interface do aplicativo Nuvem ou simplesmente apagar o diretório de configurações local <code>~/.config/nuvem</code>, o que elimina todos os tokens salvos em sua máquina.
+        </li>
+        <li>
+          <strong>Revogação Global na Conta Google:</strong> Você pode revogar imediatamente a permissão do Nuvem acessando a página oficial de segurança do Google em: 
+          <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">https://myaccount.google.com/permissions</a>.
+        </li>
+      </ul>
+
+      <h2>8. Contato</h2>
+      <p>
+        Se você tiver qualquer dúvida sobre esta Política de Privacidade ou sobre as práticas de privacidade do Nuvem, sinta-se à vontade para abrir uma <em>Issue</em> ou entrar em contato através do nosso repositório oficial no GitHub:
+      </p>
+      <p>
+        <a href="https://github.com/adenauersampaio/nuvem/issues" target="_blank" rel="noopener noreferrer">
+          https://github.com/adenauersampaio/nuvem/issues
+        </a>
+      </p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="nav-container" style="flex-direction: column; gap: 1rem;">
+      <div class="footer-links">
+        <a href="index.html">Início</a>
+        <a href="privacy.html">Política de Privacidade</a>
+        <a href="terms.html">Termos de Serviço</a>
+        <a href="https://github.com/adenauersampaio/nuvem" target="_blank" rel="noopener noreferrer">Código no GitHub</a>
+      </div>
+      <p>&copy; 2026 Nuvem. Desenvolvido sob licença MIT de código aberto.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

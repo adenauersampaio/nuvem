@@ -12,8 +12,8 @@ retomar transferências e mostrar conflitos de forma clara.
 - Configuração em um comando, sem exigir timers ou scripts manuais.
 - Uma única execução por pasta, para impedir sincronizações concorrentes.
 - Estado local persistente e diagnóstico compreensível.
-- Conflitos preservam as duas versões até que a pessoa decida.
-- Integração com o Google Drive pela API oficial.
+- Em conflitos, a versão modificada mais recentemente vence e a decisão fica registrada pelo motor nativo.
+- A integração inicial com Drive usa componentes MIT do rclone incorporados ao executável; não exige o programa `rclone` instalado.
 
 ## Idiomas
 
@@ -31,11 +31,59 @@ O controle de estado e a experiência de uso pertencem ao Nuvem.
 O comando `nuvem install` registra e inicia o daemon como um serviço de usuário
 automaticamente. Não há timer para criar ou administrar manualmente.
 
-```text
-pasta local <-> Nuvem daemon <-> adaptador Drive <-> Google Drive
-                     |
-                  SQLite (planejado)
+O novo motor independente já define uma interface única para armazenamentos,
+uma implementação de pasta local, planejamento de cópias e um diário
+append-only de decisões. Adaptadores de Google Drive, Dropbox e OneDrive
+poderão reutilizar esse núcleo. Nesta fase, exclusões continuam fora desse
+motor até haver uma base histórica segura para tratá-las.
+
+## Interface gráfica
+
+A interface inicial é GTK4 nativa para Linux, mas o núcleo continua sem
+dependência gráfica para permitir clientes futuros em Windows e macOS.
+Ela permite escolher a pasta local pelo seletor do sistema, configurar a
+frequência, salvar a configuração e iniciar uma sincronização. Na conexão com
+o Google Drive, o navegador abre o seletor oficial do Google para que a pessoa
+escolha exatamente a pasta que o Nuvem poderá usar.
+
+Além do Go 1.22, a compilação da interface requer GTK4 de desenvolvimento e
+`pkg-config` (em Debian/Ubuntu: `libgtk-4-dev pkg-config`).
+
+```bash
+go run ./cmd/nuvem-desktop
 ```
+
+Para instalá-lo no menu de aplicativos do Linux após compilar o executável:
+
+```bash
+nuvem-desktop --install
+```
+
+## Conexão com Google Drive
+
+Para a versão atual, crie um cliente OAuth do tipo **Desktop** no seu projeto
+Google Cloud e habilite a **Google Drive API** e a **Google Picker API**.
+Informe o ID e o segredo na janela Nuvem e clique em **Conectar e escolher
+pasta**. O navegador abre o consentimento do Google e o seletor oficial da
+pasta. O Nuvem solicita somente o escopo `https://www.googleapis.com/auth/drive.file`:
+o acesso fica limitado aos arquivos da pasta que a pessoa escolheu, sem o
+escopo restrito de acesso a todo o Drive.
+
+O token e as credenciais ficam somente em `~/.config/nuvem/config.json`, que o
+Nuvem grava com permissão exclusiva do usuário. O modo nativo pode ser
+verificado sem mudar o serviço atual:
+
+```bash
+nuvem run-once --engine native
+```
+
+Depois dessa conexão, o serviço passa automaticamente ao motor nativo do
+Nuvem para aquela pasta escolhida.
+
+O adaptador próprio sincroniza arquivos e pastas comuns, inclusive quando a
+pasta raiz informada pertence a um Drive compartilhado. Documentos nativos do
+Google (Docs, Sheets e Slides) são ignorados por enquanto, para não gerar uma
+exportação com formato diferente sem uma escolha explícita do usuário.
 
 ## Desenvolvimento
 
@@ -49,6 +97,7 @@ go run ./cmd/nuvem import-rclone --remote GoogleDrive
 go run ./cmd/nuvem doctor
 go run ./cmd/nuvem install --binary /caminho/absoluto/para/nuvem
 go run ./cmd/nuvem status
+go run ./cmd/nuvem-desktop
 ```
 
 ## Licença

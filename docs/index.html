@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuvem - Sincronização Contínua com Google Drive no Linux</title>
+  <meta name="description" content="Nuvem é um aplicativo desktop nativo para Linux que sincroniza pastas locais com o Google Drive de forma contínua, simples e segura.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z%22/></svg>">
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="logo-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+        </svg>
+        <span>Nuvem</span>
+      </a>
+      <nav>
+        <ul>
+          <li><a href="index.html" class="active">Início</a></li>
+          <li><a href="privacy.html">Privacidade</a></li>
+          <li><a href="terms.html">Termos</a></li>
+          <li><a href="https://github.com/adenauersampaio/nuvem" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="badge">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Seguro &bull; Privado &bull; Código Aberto
+      </div>
+      <h1>Sincronização simples de pastas no Linux com Google Drive</h1>
+      <p>
+        O <strong>Nuvem</strong> é um cliente desktop nativo para Linux desenvolvido em Go e GTK4. 
+        Ele oferece a experiência tranquila de uma pasta local comum: você escolhe a pasta uma vez e o app cuida de acompanhar alterações e transferências em segundo plano.
+      </p>
+      <div class="cta-group">
+        <a href="https://github.com/adenauersampaio/nuvem" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+          Ver no GitHub
+        </a>
+        <a href="privacy.html" class="btn btn-secondary">
+          Conhecer nossa Política de Privacidade
+        </a>
+      </div>
+    </section>
+
+    <div class="features-grid">
+      <article class="feature-card">
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>Acesso Estritamente Delimitado</h3>
+        <p>
+          Utilizamos o escopo <code>drive.file</code> juntamente com o seletor oficial do Google (Picker). 
+          O Nuvem só tem permissão para acessar a pasta específica que você escolher, sem acesso total ao seu Google Drive.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3>100% Local e Sem Intermediários</h3>
+        <p>
+          Não existem servidores intermediários, nuvens de terceiros ou telemetria. 
+          Suas credenciais e dados permanecem gravados exclusivamente no seu próprio computador.
+        </p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+        </div>
+        <h3>Serviço Silencioso em Segundo Plano</h3>
+        <p>
+          O daemon do Nuvem integra-se nativamente como um serviço de usuário do systemd, 
+          garantindo sincronização estável mesmo com a janela do aplicativo fechada.
+        </p>
+      </article>
+    </div>
+
+    <section class="content-box">
+      <h2>Transparência e Conformidade</h2>
+      <p>
+        O Nuvem foi projetado sob os princípios de transparência, privacidade e controle do usuário. 
+        Nossa integração com as APIs do Google segue estritamente a 
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">
+          Política de Dados do Usuário dos Serviços de API do Google
+        </a>.
+      </p>
+      <div class="highlight-box">
+        <p>
+          Suas credenciais de acesso e arquivos sincronizados trafegam unicamente entre o seu cliente local e os servidores oficiais do Google.
+        </p>
+      </div>
+      <p>
+        Para saber todos os detalhes de como lidamos com a sua segurança, consulte a nossa 
+        <a href="privacy.html"><strong>Política de Privacidade</strong></a> e os nossos 
+        <a href="terms.html"><strong>Termos de Serviço</strong></a>.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="nav-container" style="flex-direction: column; gap: 1rem;">
+      <div class="footer-links">
+        <a href="index.html">Início</a>
+        <a href="privacy.html">Política de Privacidade</a>
+        <a href="terms.html">Termos de Serviço</a>
+        <a href="https://github.com/adenauersampaio/nuvem" target="_blank" rel="noopener noreferrer">Código no GitHub</a>
+      </div>
+      <p>&copy; 2026 Nuvem. Desenvolvido sob licença MIT de código aberto.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

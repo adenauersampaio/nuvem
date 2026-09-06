@@ -24,3 +24,11 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Fatalf("configuração = %#v; quer %#v", got, want)
 	}
 }
+
+func TestValidateRejectsUnknownEngine(t *testing.T) {
+	local := t.TempDir()
+	cfg := Config{Version: CurrentVersion, Sync: SyncConfig{LocalPath: local, Remote: "GoogleDrive:Modelos", Interval: time.Minute, Engine: "other"}}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected invalid engine to be rejected")
+	}
+}

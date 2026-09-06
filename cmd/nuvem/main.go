@@ -13,9 +13,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/adenauersampaio/nuvem/internal/app"
 	"github.com/adenauersampaio/nuvem/internal/config"
 	"github.com/adenauersampaio/nuvem/internal/daemon"
 	"github.com/adenauersampaio/nuvem/internal/i18n"
+	"github.com/adenauersampaio/nuvem/internal/nativesync"
 	"github.com/adenauersampaio/nuvem/internal/rcloneconfig"
 	"github.com/adenauersampaio/nuvem/internal/runlock"
 	"github.com/adenauersampaio/nuvem/internal/service"
@@ -68,7 +70,7 @@ func run(args []string, language i18n.Language, stdout, stderr io.Writer) error 
 	case "init":
 		return initialize(args[1:], language, stdout)
 	case "run-once":
-		return runOnce(language)
+		return runOnce(args[1:], language)
 	case "daemon":
 		return runDaemon(language)
 	case "install":
@@ -128,32 +130,33 @@ func doctor(language i18n.Language, w io.Writer) error {
 	if err := cfg.Validate(); err != nil {
 		return err
 	}
-	engine, err := embeddedEngine()
-	if err != nil {
-		return err
-	}
-	if err := engine.Check(); err != nil {
-		return err
+	if cfg.Sync.Engine != "native" {
+		engine, err := embeddedEngine()
+		if err != nil {
+			return err
+		}
+		if err := engine.Check(); err != nil {
+			return err
+		}
 	}
 	_, err = fmt.Fprintf(w, i18n.Text(language, i18n.KeyConfigValid), cfg.Sync.LocalPath, cfg.Sync.Remote)
 	return err
 }
 
-func runOnce(language i18n.Language) error {
-	cfg, err := config.LoadDefault()
-	if err != nil {
+func runOnce(args []string, language i18n.Language) error {
+	flags := flag.NewFlagSet("run-once", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	engine := flags.String("engine", "", "motor de sincronização")
+	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if err := cfg.Validate(); err != nil {
-		return err
+	if *engine == "" {
+		return app.RunOnce(context.Background())
 	}
-	engine, err := embeddedEngine()
-	if err != nil {
-		return err
+	if *engine != "native" && *engine != "embedded" {
+		return fmt.Errorf("motor desconhecido %q; use native ou embedded", *engine)
 	}
-	return withSyncLock(language, func() error {
-		return engine.Sync(context.Background(), cfg.Sync)
-	})
+	return app.RunWithEngine(context.Background(), *engine)
 }
 
 func runDaemon(language i18n.Language) error {
@@ -166,22 +169,45 @@ func runDaemon(language i18n.Language) error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	engine, err := embeddedEngine()
-	if err != nil {
-		return err
+	var engine daemon.Engine
+	if cfg.Sync.Engine == "native" {
+		engine = nativeEngine{}
+	} else {
+		embedded, err := embeddedEngine()
+		if err != nil {
+			return err
+		}
+		engine = embedded
 	}
-	err = withSyncLock(language, func() error {
-		runner := daemon.New(engine, cfg.Sync, cfg.Sync.Interval)
-		return runner.Run(ctx, func(err error) {
-			if !errors.Is(err, context.Canceled) {
-				fmt.Fprintln(os.Stderr, i18n.Text(language, i18n.KeySyncFailed), err)
-			}
-		})
+	runner := daemon.New(lockedEngine{engine: engine, language: language}, cfg.Sync, cfg.Sync.Interval)
+	err = runner.Run(ctx, func(err error) {
+		if !errors.Is(err, context.Canceled) {
+			fmt.Fprintln(os.Stderr, i18n.Text(language, i18n.KeySyncFailed), err)
+		}
 	})
 	if errors.Is(err, context.Canceled) {
 		return nil
 	}
 	return err
+}
+
+// lockedEngine keeps the process-wide lock only while one transfer is active.
+// The daemon itself can therefore remain alive while a desktop-initiated run
+// safely waits for the next cycle.
+type lockedEngine struct {
+	engine   daemon.Engine
+	language i18n.Language
+}
+
+type nativeEngine struct{}
+
+func (nativeEngine) Sync(ctx context.Context, syncConfig config.SyncConfig) error {
+	_, err := nativesync.Run(ctx, syncConfig)
+	return err
+}
+
+func (e lockedEngine) Sync(ctx context.Context, syncConfig config.SyncConfig) error {
+	return withSyncLock(e.language, func() error { return e.engine.Sync(ctx, syncConfig) })
 }
 
 func withSyncLock(language i18n.Language, action func() error) error {
