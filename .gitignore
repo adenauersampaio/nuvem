@@ -1,0 +1,21 @@
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+git-commit.sh
+
+# Local application state
+.nuvem/
+data/
+logs/
+
+# Go build output and coverage
+bin/
+coverage.out
+*.test
+
+# Editors and operating-system files
+.idea/
+.vscode/
+*.swp
+.DS_Store

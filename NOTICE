@@ -1,0 +1,6 @@
+Nuvem includes the Google Drive backend and bidirectional synchronization
+components from rclone v1.60.1.
+
+rclone is Copyright (C) Nick Craig-Wood and contributors, and is distributed
+under the MIT License. Its source code is available at
+https://github.com/rclone/rclone.
