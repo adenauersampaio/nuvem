@@ -186,16 +186,19 @@ static void on_choose_folder(GtkButton *button, gpointer data) {
 
 static void activate(GtkApplication *app, gpointer data) {
   window = gtk_application_window_new(app);
-  gtk_window_set_default_size(GTK_WINDOW(window), 680, 520);
+  gtk_window_set_default_size(GTK_WINDOW(window), 660, 480);
+
+  GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_window_set_child(GTK_WINDOW(window), main_box);
 
   GtkWidget *scrolled = gtk_scrolled_window_new();
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled), TRUE);
-  gtk_window_set_child(GTK_WINDOW(window), scrolled);
+  gtk_widget_set_vexpand(scrolled, TRUE);
+  gtk_box_append(GTK_BOX(main_box), scrolled);
 
   GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
   gtk_widget_set_margin_top(root, 14);
-  gtk_widget_set_margin_bottom(root, 14);
+  gtk_widget_set_margin_bottom(root, 10);
   gtk_widget_set_margin_start(root, 20);
   gtk_widget_set_margin_end(root, 20);
   gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled), root);
@@ -274,13 +277,15 @@ static void activate(GtkApplication *app, gpointer data) {
   gtk_box_append(GTK_BOX(form), remote_group);
 
   frequency_label = gtk_label_new(NULL);
+  gtk_widget_set_halign(frequency_label, GTK_ALIGN_START);
+  gtk_widget_set_hexpand(frequency_label, TRUE);
   minutes_spin = gtk_spin_button_new_with_range(1, 1440, 1);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(minutes_spin), 15);
-  gtk_widget_set_halign(frequency_label, GTK_ALIGN_START);
-  GtkWidget *freq_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
-  gtk_box_append(GTK_BOX(freq_group), frequency_label);
-  gtk_box_append(GTK_BOX(freq_group), minutes_spin);
-  gtk_box_append(GTK_BOX(form), freq_group);
+  gtk_widget_set_halign(minutes_spin, GTK_ALIGN_END);
+  GtkWidget *freq_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_append(GTK_BOX(freq_row), frequency_label);
+  gtk_box_append(GTK_BOX(freq_row), minutes_spin);
+  gtk_box_append(GTK_BOX(form), freq_row);
 
   client_id_label = gtk_label_new(NULL);
   gtk_widget_set_halign(client_id_label, GTK_ALIGN_START);
@@ -300,6 +305,10 @@ static void activate(GtkApplication *app, gpointer data) {
   gtk_box_append(GTK_BOX(form), csec_group);
 
   GtkWidget *actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+  gtk_widget_set_margin_top(actions, 8);
+  gtk_widget_set_margin_bottom(actions, 14);
+  gtk_widget_set_margin_start(actions, 20);
+  gtk_widget_set_margin_end(actions, 20);
   save_button = gtk_button_new();
   g_signal_connect(save_button, "clicked", G_CALLBACK(on_save), NULL);
   connect_button = gtk_button_new();
@@ -310,7 +319,7 @@ static void activate(GtkApplication *app, gpointer data) {
   gtk_box_append(GTK_BOX(actions), save_button);
   gtk_box_append(GTK_BOX(actions), connect_button);
   gtk_box_append(GTK_BOX(actions), sync_button);
-  gtk_box_append(GTK_BOX(root), actions);
+  gtk_box_append(GTK_BOX(main_box), actions);
 
   set_texts();
   gtk_window_present(GTK_WINDOW(window));
