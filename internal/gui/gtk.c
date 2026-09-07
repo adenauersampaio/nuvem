@@ -186,14 +186,19 @@ static void on_choose_folder(GtkButton *button, gpointer data) {
 
 static void activate(GtkApplication *app, gpointer data) {
   window = gtk_application_window_new(app);
-  gtk_window_set_default_size(GTK_WINDOW(window), 720, 560);
+  gtk_window_set_default_size(GTK_WINDOW(window), 680, 520);
 
-  GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 20);
-  gtk_widget_set_margin_top(root, 28);
-  gtk_widget_set_margin_bottom(root, 28);
-  gtk_widget_set_margin_start(root, 32);
-  gtk_widget_set_margin_end(root, 32);
-  gtk_window_set_child(GTK_WINDOW(window), root);
+  GtkWidget *scrolled = gtk_scrolled_window_new();
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled), TRUE);
+  gtk_window_set_child(GTK_WINDOW(window), scrolled);
+
+  GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+  gtk_widget_set_margin_top(root, 14);
+  gtk_widget_set_margin_bottom(root, 14);
+  gtk_widget_set_margin_start(root, 20);
+  gtk_widget_set_margin_end(root, 20);
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled), root);
 
   GtkWidget *header_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   title_label = gtk_label_new("Nuvem");
@@ -212,33 +217,35 @@ static void activate(GtkApplication *app, gpointer data) {
 
   gtk_box_append(GTK_BOX(root), header_row);
 
-
+  GtkWidget *info_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
   description_label = gtk_label_new(NULL);
   gtk_widget_set_halign(description_label, GTK_ALIGN_START);
   gtk_widget_add_css_class(description_label, "dim-label");
-  gtk_box_append(GTK_BOX(root), description_label);
+  gtk_box_append(GTK_BOX(info_box), description_label);
 
   status_label = gtk_label_new(NULL);
   gtk_widget_set_halign(status_label, GTK_ALIGN_START);
   gtk_label_set_wrap(GTK_LABEL(status_label), TRUE);
-  gtk_box_append(GTK_BOX(root), status_label);
+  gtk_box_append(GTK_BOX(info_box), status_label);
 
   folder_label = gtk_label_new(NULL);
   gtk_widget_set_halign(folder_label, GTK_ALIGN_START);
   gtk_label_set_wrap(GTK_LABEL(folder_label), TRUE);
-  gtk_box_append(GTK_BOX(root), folder_label);
+  gtk_box_append(GTK_BOX(info_box), folder_label);
 
   service_label = gtk_label_new(NULL);
   gtk_widget_set_halign(service_label, GTK_ALIGN_START);
   gtk_widget_add_css_class(service_label, "dim-label");
-  gtk_box_append(GTK_BOX(root), service_label);
+  gtk_box_append(GTK_BOX(info_box), service_label);
+
+  gtk_box_append(GTK_BOX(root), info_box);
 
   connection_frame = gtk_frame_new(NULL);
-  GtkWidget *form = gtk_box_new(GTK_ORIENTATION_VERTICAL, 14);
-  gtk_widget_set_margin_top(form, 16);
-  gtk_widget_set_margin_bottom(form, 16);
-  gtk_widget_set_margin_start(form, 16);
-  gtk_widget_set_margin_end(form, 16);
+  GtkWidget *form = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  gtk_widget_set_margin_top(form, 10);
+  gtk_widget_set_margin_bottom(form, 10);
+  gtk_widget_set_margin_start(form, 12);
+  gtk_widget_set_margin_end(form, 12);
   gtk_frame_set_child(GTK_FRAME(connection_frame), form);
   gtk_box_append(GTK_BOX(root), connection_frame);
 
@@ -252,35 +259,45 @@ static void activate(GtkApplication *app, gpointer data) {
   gtk_box_append(GTK_BOX(local_row), local_entry);
   gtk_box_append(GTK_BOX(local_row), choose_button);
   gtk_widget_set_halign(local_label, GTK_ALIGN_START);
-  gtk_box_append(GTK_BOX(form), local_label);
-  gtk_box_append(GTK_BOX(form), local_row);
+  GtkWidget *local_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
+  gtk_box_append(GTK_BOX(local_group), local_label);
+  gtk_box_append(GTK_BOX(local_group), local_row);
+  gtk_box_append(GTK_BOX(form), local_group);
 
   remote_label = gtk_label_new(NULL);
   remote_entry = gtk_entry_new();
   gtk_entry_set_placeholder_text(GTK_ENTRY(remote_entry), "GoogleDrive:");
   gtk_widget_set_halign(remote_label, GTK_ALIGN_START);
-  gtk_box_append(GTK_BOX(form), remote_label);
-  gtk_box_append(GTK_BOX(form), remote_entry);
+  GtkWidget *remote_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
+  gtk_box_append(GTK_BOX(remote_group), remote_label);
+  gtk_box_append(GTK_BOX(remote_group), remote_entry);
+  gtk_box_append(GTK_BOX(form), remote_group);
 
   frequency_label = gtk_label_new(NULL);
   minutes_spin = gtk_spin_button_new_with_range(1, 1440, 1);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(minutes_spin), 15);
   gtk_widget_set_halign(frequency_label, GTK_ALIGN_START);
-  gtk_box_append(GTK_BOX(form), frequency_label);
-  gtk_box_append(GTK_BOX(form), minutes_spin);
+  GtkWidget *freq_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
+  gtk_box_append(GTK_BOX(freq_group), frequency_label);
+  gtk_box_append(GTK_BOX(freq_group), minutes_spin);
+  gtk_box_append(GTK_BOX(form), freq_group);
 
   client_id_label = gtk_label_new(NULL);
   gtk_widget_set_halign(client_id_label, GTK_ALIGN_START);
   client_id_entry = gtk_entry_new();
   gtk_entry_set_placeholder_text(GTK_ENTRY(client_id_entry), "1234567890-…apps.googleusercontent.com");
-  gtk_box_append(GTK_BOX(form), client_id_label);
-  gtk_box_append(GTK_BOX(form), client_id_entry);
+  GtkWidget *cid_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
+  gtk_box_append(GTK_BOX(cid_group), client_id_label);
+  gtk_box_append(GTK_BOX(cid_group), client_id_entry);
+  gtk_box_append(GTK_BOX(form), cid_group);
 
   client_secret_label = gtk_label_new(NULL);
   gtk_widget_set_halign(client_secret_label, GTK_ALIGN_START);
   client_secret_entry = gtk_password_entry_new();
-  gtk_box_append(GTK_BOX(form), client_secret_label);
-  gtk_box_append(GTK_BOX(form), client_secret_entry);
+  GtkWidget *csec_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
+  gtk_box_append(GTK_BOX(csec_group), client_secret_label);
+  gtk_box_append(GTK_BOX(csec_group), client_secret_entry);
+  gtk_box_append(GTK_BOX(form), csec_group);
 
   GtkWidget *actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
   save_button = gtk_button_new();
