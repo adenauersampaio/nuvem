@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-RAW_VERSION="${1:-0.1.1}"
+RAW_VERSION="${1:-0.1.2}"
 # Remove prefixo 'v' se fornecido (ex: v0.1.0 -> 0.1.0)
 VERSION="${RAW_VERSION#v}"
 # Converte -beta.1 para ~beta1 para conformidade estrita com o Debian versioning

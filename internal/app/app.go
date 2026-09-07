@@ -61,14 +61,24 @@ func Save(localPath, remote string, interval time.Duration, clientID, clientSecr
 	cfg.Sync = config.SyncConfig{LocalPath: localPath, Remote: remote, Interval: interval}
 	if clientID != "" {
 		cfg.GoogleDrive.ClientID = clientID
+	} else if cfg.GoogleDrive.ClientID == "" {
+		cfg.GoogleDrive.ClientID = googleauth.DefaultClientID
 	}
 	if clientSecret != "" {
 		cfg.GoogleDrive.ClientSecret = clientSecret
+	} else if cfg.GoogleDrive.ClientSecret == "" {
+		cfg.GoogleDrive.ClientSecret = googleauth.DefaultClientSecret()
 	}
 	return config.SaveDefault(cfg)
 }
 
 func ConnectGoogleDrive(ctx context.Context, clientID, clientSecret string) error {
+	if clientID == "" {
+		clientID = googleauth.DefaultClientID
+	}
+	if clientSecret == "" {
+		clientSecret = googleauth.DefaultClientSecret()
+	}
 	if err := SaveCurrentClient(clientID, clientSecret); err != nil {
 		return err
 	}
@@ -104,6 +114,12 @@ func SaveCurrentClient(clientID, clientSecret string) error {
 	cfg, err := config.LoadDefault()
 	if err != nil {
 		return err
+	}
+	if clientID == "" {
+		clientID = googleauth.DefaultClientID
+	}
+	if clientSecret == "" {
+		clientSecret = googleauth.DefaultClientSecret()
 	}
 	if clientID == "" {
 		return fmt.Errorf("o ID do cliente OAuth do Google é obrigatório")

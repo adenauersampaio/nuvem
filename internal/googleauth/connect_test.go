@@ -3,6 +3,7 @@ package googleauth
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -36,5 +37,12 @@ func TestCallbackRejectsNoPickedFolder(t *testing.T) {
 func TestUsesDriveFileScope(t *testing.T) {
 	if driveScope != "https://www.googleapis.com/auth/drive.file" {
 		t.Fatalf("unexpected scope: %s", driveScope)
+	}
+}
+
+func TestDefaultClientSecret(t *testing.T) {
+	secret := DefaultClientSecret()
+	if !strings.HasPrefix(secret, "GOCSPX-") {
+		t.Fatalf("DefaultClientSecret() should start with GOCSPX-, got: %s", secret)
 	}
 }

@@ -16,18 +16,16 @@ import (
 type Controller interface {
 	Activated()
 	SyncNow()
-	Save(local, remote string, minutes int, clientID, clientSecret string)
-	ConnectGoogleDrive(clientID, clientSecret string)
+	Save(local, remote string, minutes int)
+	ConnectGoogleDrive()
 }
 
 type Dashboard struct {
-	Local              string
-	Remote             string
-	Minutes            int
-	Service            string
-	Configured         bool
-	GoogleClientID     string
-	GoogleClientSecret string
+	Local      string
+	Remote     string
+	Minutes    int
+	Service    string
+	Configured bool
 }
 
 var (
@@ -66,10 +64,7 @@ func SetDashboard(value Dashboard) {
 	if value.Configured {
 		configured = 1
 	}
-	clientID, clientSecret := C.CString(value.GoogleClientID), C.CString(value.GoogleClientSecret)
-	defer C.free(unsafePointer(clientID))
-	defer C.free(unsafePointer(clientSecret))
-	C.nuvem_set_dashboard(local, remote, C.int(value.Minutes), service, clientID, clientSecret, C.int(configured))
+	C.nuvem_set_dashboard(local, remote, C.int(value.Minutes), service, C.int(configured))
 }
 
 func SetDonationURLs(bmc, livepix, binance, github string) {
@@ -103,15 +98,15 @@ func goNuvemSyncNow() {
 }
 
 //export goNuvemSaveConfig
-func goNuvemSaveConfig(local, remote *C.char, minutes C.int, clientID, clientSecret *C.char) {
+func goNuvemSaveConfig(local, remote *C.char, minutes C.int) {
 	if c := currentController(); c != nil {
-		go c.Save(C.GoString(local), C.GoString(remote), int(minutes), C.GoString(clientID), C.GoString(clientSecret))
+		go c.Save(C.GoString(local), C.GoString(remote), int(minutes))
 	}
 }
 
 //export goNuvemConnectGoogle
-func goNuvemConnectGoogle(clientID, clientSecret *C.char) {
+func goNuvemConnectGoogle() {
 	if c := currentController(); c != nil {
-		go c.ConnectGoogleDrive(C.GoString(clientID), C.GoString(clientSecret))
+		go c.ConnectGoogleDrive()
 	}
 }

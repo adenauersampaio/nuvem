@@ -13,11 +13,25 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
+	"github.com/rclone/rclone/fs/config/obscure"
 )
 
 // drive.file is non-sensitive and lets Nuvem work only with the folder the
 // person explicitly selects through Google's Picker flow.
-const driveScope = "https://www.googleapis.com/auth/drive.file"
+const (
+	driveScope                  = "https://www.googleapis.com/auth/drive.file"
+	DefaultClientID             = "939707947327-qnhladb3pghi0qfd1fm7jhr1mme5j55f.apps.googleusercontent.com"
+	defaultObscuredClientSecret = "IFOQl6vy68KrprWk8n4pa1lPCyc_0x8_M9_ygXSMArlgKDsfUTK_GneHUhEdAEXU3RT5"
+)
+
+// DefaultClientSecret returns the revealed client secret.
+func DefaultClientSecret() string {
+	revealed, err := obscure.Reveal(defaultObscuredClientSecret)
+	if err != nil {
+		return ""
+	}
+	return revealed
+}
 
 // Result is the authorization together with the folder selected in Google's
 // official Picker flow.
@@ -35,6 +49,12 @@ type callbackResult struct {
 // Connect opens the system browser and receives the browser callback on an
 // ephemeral localhost port. The OAuth client must be a Google Desktop client.
 func Connect(ctx context.Context, clientID, clientSecret string) (Result, error) {
+	if clientID == "" {
+		clientID = DefaultClientID
+	}
+	if clientSecret == "" {
+		clientSecret = DefaultClientSecret()
+	}
 	if clientID == "" {
 		return Result{}, fmt.Errorf("o ID do cliente OAuth do Google é obrigatório")
 	}
