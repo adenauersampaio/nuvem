@@ -24,7 +24,7 @@ import (
 	"github.com/adenauersampaio/nuvem/internal/syncer"
 )
 
-const version = "0.1.0-beta.1"
+const version = "0.1.1"
 
 func main() {
 	language, args, err := languageFromArgs(os.Args[1:])
