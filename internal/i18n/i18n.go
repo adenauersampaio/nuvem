@@ -21,6 +21,14 @@ const (
 	KeyServiceStatus    string   = "service_status"
 	KeySyncInProgress   string   = "sync_in_progress"
 	KeyRemoteImported   string   = "remote_imported"
+	KeyAbout            string   = "about"
+	KeyAboutTitle       string   = "about_title"
+	KeyAboutCoffee      string   = "about_coffee"
+	KeySupportBMC       string   = "support_bmc"
+	KeySupportLivepix   string   = "support_livepix"
+	KeySupportBinance   string   = "support_binance"
+	KeySupportGitHub    string   = "support_github"
+	KeyClose            string   = "close"
 )
 
 var messages = map[Language]map[string]string{
@@ -37,6 +45,14 @@ var messages = map[Language]map[string]string{
 		KeyServiceStatus:    "Service status: %s\n",
 		KeySyncInProgress:   "a Nuvem synchronization is already running",
 		KeyRemoteImported:   "Drive profile imported into Nuvem's private configuration.\n",
+		KeyAbout:            "About",
+		KeyAboutTitle:       "About Nuvem",
+		KeyAboutCoffee:      "If this software is useful to you, consider buying me a coffee... $1",
+		KeySupportBMC:       "Buy Me a Coffee ($1) ☕",
+		KeySupportLivepix:   "Support with Pix (Livepix) 🇧🇷",
+		KeySupportBinance:   "Support via Binance Pay (Crypto) 💛",
+		KeySupportGitHub:    "GitHub Sponsors 💖",
+		KeyClose:            "Close",
 		KeyHelp: `Nuvem — continuous Google Drive sync for Linux
 
 Usage:
@@ -66,6 +82,14 @@ The language follows NUVEM_LANG or LANG when --lang is omitted.
 		KeyServiceStatus:    "Estado do serviço: %s\n",
 		KeySyncInProgress:   "uma sincronização do Nuvem já está em andamento",
 		KeyRemoteImported:   "Perfil do Drive importado para a configuração privada do Nuvem.\n",
+		KeyAbout:            "Sobre",
+		KeyAboutTitle:       "Sobre o Nuvem",
+		KeyAboutCoffee:      "Se este software está sendo útil, cogite deixar um café... US$ 1",
+		KeySupportBMC:       "Deixar um café (Buy Me a Coffee) ☕",
+		KeySupportLivepix:   "Apoiar via Pix (Livepix) 🇧🇷",
+		KeySupportBinance:   "Apoiar via Binance Pay (Cripto) 💛",
+		KeySupportGitHub:    "GitHub Sponsors 💖",
+		KeyClose:            "Fechar",
 		KeyHelp: `Nuvem — sincronização contínua com Google Drive no Linux
 
 Uso:

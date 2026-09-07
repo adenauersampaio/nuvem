@@ -24,3 +24,18 @@ func TestParse(t *testing.T) {
 		t.Fatal("fr should not be accepted")
 	}
 }
+
+func TestText(t *testing.T) {
+	if got := Text(PortugueseBrazil, KeyAboutCoffee); got == "" || got == Text(English, KeyAboutCoffee) {
+		t.Errorf("expected distinct Portuguese translation for KeyAboutCoffee, got %q", got)
+	}
+	if got := Text(English, KeyAboutCoffee); got == "" {
+		t.Errorf("expected English translation for KeyAboutCoffee, got empty")
+	}
+	if got := Text(PortugueseBrazil, KeyAbout); got != "Sobre" {
+		t.Errorf("expected 'Sobre', got %q", got)
+	}
+	if got := Text(English, KeyAbout); got != "About" {
+		t.Errorf("expected 'About', got %q", got)
+	}
+}

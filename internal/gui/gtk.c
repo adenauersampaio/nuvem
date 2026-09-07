@@ -27,11 +27,110 @@ static GtkWidget *client_secret_entry;
 static GtkWidget *save_button;
 static GtkWidget *choose_button;
 static GtkWidget *connect_button;
+static GtkWidget *about_button;
 static int portuguese;
+
+static char *url_bmc = NULL;
+static char *url_livepix = NULL;
+static char *url_binance = NULL;
+static char *url_github = NULL;
+
+void nuvem_set_donation_urls(const char *bmc, const char *livepix, const char *binance, const char *github) {
+  if (url_bmc) g_free(url_bmc);
+  if (url_livepix) g_free(url_livepix);
+  if (url_binance) g_free(url_binance);
+  if (url_github) g_free(url_github);
+
+  url_bmc = (bmc && bmc[0]) ? g_strdup(bmc) : g_strdup("https://buymeacoffee.com/adetech");
+  url_livepix = (livepix && livepix[0]) ? g_strdup(livepix) : g_strdup("https://livepix.gg/adetech");
+  url_binance = (binance && binance[0]) ? g_strdup(binance) : g_strdup("https://app.binance.com/uni-qr/request-to-pay?billOrderId=452917517181927424&billType=request_a_payment");
+  url_github = (github && github[0]) ? g_strdup(github) : g_strdup("https://github.com/sponsors/adenauersampaio");
+}
+
+static void on_about(GtkButton *button, gpointer data) {
+  GtkWidget *dialog = gtk_window_new();
+  gtk_window_set_title(GTK_WINDOW(dialog), portuguese ? "Sobre o Nuvem" : "About Nuvem");
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 480, -1);
+  gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+
+  GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 14);
+  gtk_widget_set_margin_top(box, 24);
+  gtk_widget_set_margin_bottom(box, 24);
+  gtk_widget_set_margin_start(box, 28);
+  gtk_widget_set_margin_end(box, 28);
+  gtk_window_set_child(GTK_WINDOW(dialog), box);
+
+  GtkWidget *title = gtk_label_new("Nuvem");
+  gtk_widget_set_halign(title, GTK_ALIGN_START);
+  gtk_widget_add_css_class(title, "title-2");
+  gtk_box_append(GTK_BOX(box), title);
+
+  GtkWidget *desc = gtk_label_new(portuguese 
+      ? "Sua pasta e a nuvem, sem comandos."
+      : "Your folder and the cloud, without commands.");
+  gtk_widget_set_halign(desc, GTK_ALIGN_START);
+  gtk_widget_add_css_class(desc, "dim-label");
+  gtk_box_append(GTK_BOX(box), desc);
+
+  GtkWidget *prompt = gtk_label_new(portuguese
+      ? "☕ Se este software está sendo útil, cogite deixar um café... US$ 1"
+      : "☕ If this software is useful to you, consider buying me a coffee... $1");
+  gtk_widget_set_halign(prompt, GTK_ALIGN_START);
+  gtk_label_set_wrap(GTK_LABEL(prompt), TRUE);
+  gtk_box_append(GTK_BOX(box), prompt);
+
+  const char *bmc = (url_bmc && url_bmc[0]) ? url_bmc : "https://buymeacoffee.com/adetech";
+  const char *livepix = (url_livepix && url_livepix[0]) ? url_livepix : "https://livepix.gg/adetech";
+  const char *binance = (url_binance && url_binance[0]) ? url_binance : "https://app.binance.com/uni-qr/request-to-pay?billOrderId=452917517181927424&billType=request_a_payment";
+  const char *github = (url_github && url_github[0]) ? url_github : "https://github.com/sponsors/adenauersampaio";
+
+  GtkWidget *links_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  gtk_widget_set_margin_top(links_box, 6);
+  gtk_widget_set_margin_bottom(links_box, 6);
+
+  GtkWidget *btn_livepix = gtk_link_button_new_with_label(
+      livepix,
+      portuguese ? "🇧🇷 Apoiar via Pix (Livepix)" : "🇧🇷 Support with Pix (Livepix)");
+  GtkWidget *btn_bmc = gtk_link_button_new_with_label(
+      bmc,
+      portuguese ? "☕ Deixar um café (Buy Me a Coffee)" : "☕ Buy Me a Coffee ($1)");
+  GtkWidget *btn_binance = gtk_link_button_new_with_label(
+      binance,
+      portuguese ? "💛 Apoiar via Binance Pay (Cripto)" : "💛 Support via Binance Pay (Crypto)");
+  GtkWidget *btn_github = gtk_link_button_new_with_label(
+      github,
+      "💖 GitHub Sponsors");
+
+  if (portuguese) {
+    gtk_box_append(GTK_BOX(links_box), btn_livepix);
+    gtk_box_append(GTK_BOX(links_box), btn_bmc);
+    gtk_box_append(GTK_BOX(links_box), btn_binance);
+    gtk_box_append(GTK_BOX(links_box), btn_github);
+  } else {
+    gtk_box_append(GTK_BOX(links_box), btn_bmc);
+    gtk_box_append(GTK_BOX(links_box), btn_github);
+    gtk_box_append(GTK_BOX(links_box), btn_binance);
+    gtk_box_append(GTK_BOX(links_box), btn_livepix);
+  }
+  gtk_box_append(GTK_BOX(box), links_box);
+
+  GtkWidget *close_btn = gtk_button_new_with_label(portuguese ? "Fechar" : "Close");
+  gtk_widget_set_halign(close_btn, GTK_ALIGN_END);
+  g_signal_connect_swapped(close_btn, "clicked", G_CALLBACK(gtk_window_destroy), dialog);
+  gtk_box_append(GTK_BOX(box), close_btn);
+
+  gtk_window_present(GTK_WINDOW(dialog));
+}
 
 static void set_texts(void) {
   gtk_window_set_title(GTK_WINDOW(window), "Nuvem");
   gtk_label_set_text(GTK_LABEL(title_label), "Nuvem");
+  if (about_button != NULL) {
+    gtk_button_set_label(GTK_BUTTON(about_button), portuguese ? "Sobre" : "About");
+    gtk_widget_set_tooltip_text(about_button, portuguese ? "Sobre o Nuvem e apoio" : "About Nuvem and support");
+  }
   gtk_label_set_text(GTK_LABEL(description_label), portuguese ? "Sua pasta e a nuvem, sem comandos." : "Your folder and the cloud, without commands.");
   gtk_frame_set_label(GTK_FRAME(connection_frame), portuguese ? "Sincronização" : "Synchronization");
   gtk_label_set_text(GTK_LABEL(local_label), portuguese ? "Pasta neste computador" : "Folder on this computer");
@@ -96,10 +195,23 @@ static void activate(GtkApplication *app, gpointer data) {
   gtk_widget_set_margin_end(root, 32);
   gtk_window_set_child(GTK_WINDOW(window), root);
 
+  GtkWidget *header_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
   title_label = gtk_label_new("Nuvem");
   gtk_widget_set_halign(title_label, GTK_ALIGN_START);
   gtk_widget_add_css_class(title_label, "title-1");
-  gtk_box_append(GTK_BOX(root), title_label);
+  gtk_box_append(GTK_BOX(header_row), title_label);
+
+  GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_set_hexpand(spacer, TRUE);
+  gtk_box_append(GTK_BOX(header_row), spacer);
+
+  about_button = gtk_button_new();
+  gtk_widget_add_css_class(about_button, "flat");
+  g_signal_connect(about_button, "clicked", G_CALLBACK(on_about), NULL);
+  gtk_box_append(GTK_BOX(header_row), about_button);
+
+  gtk_box_append(GTK_BOX(root), header_row);
+
 
   description_label = gtk_label_new(NULL);
   gtk_widget_set_halign(description_label, GTK_ALIGN_START);

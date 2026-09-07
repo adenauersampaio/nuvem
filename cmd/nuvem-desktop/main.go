@@ -38,6 +38,19 @@ func main() {
 	if os.Getenv("NUVEM_LANG") == "" {
 		language = i18n.Detect(os.Getenv("LANG"))
 	}
+	for i := 1; i < len(os.Args); i++ {
+		if os.Args[i] == "--lang" && i+1 < len(os.Args) {
+			if l, ok := i18n.Parse(os.Args[i+1]); ok {
+				language = l
+			}
+		}
+	}
+	gui.SetDonationURLs(
+		os.Getenv("NUVEM_BMC_URL"),
+		os.Getenv("NUVEM_LIVEPIX_URL"),
+		os.Getenv("NUVEM_BINANCE_URL"),
+		os.Getenv("NUVEM_GITHUB_SPONSORS_URL"),
+	)
 	gui.Run(desktopController{language: language}, language == i18n.PortugueseBrazil)
 }
 

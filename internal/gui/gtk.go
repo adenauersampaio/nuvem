@@ -72,6 +72,18 @@ func SetDashboard(value Dashboard) {
 	C.nuvem_set_dashboard(local, remote, C.int(value.Minutes), service, clientID, clientSecret, C.int(configured))
 }
 
+func SetDonationURLs(bmc, livepix, binance, github string) {
+	cBmc := C.CString(bmc)
+	defer C.free(unsafePointer(cBmc))
+	cLivepix := C.CString(livepix)
+	defer C.free(unsafePointer(cLivepix))
+	cBinance := C.CString(binance)
+	defer C.free(unsafePointer(cBinance))
+	cGithub := C.CString(github)
+	defer C.free(unsafePointer(cGithub))
+	C.nuvem_set_donation_urls(cBmc, cLivepix, cBinance, cGithub)
+}
+
 func unsafePointer(value *C.char) unsafe.Pointer { return unsafe.Pointer(value) }
 
 func currentController() Controller { mu.RLock(); defer mu.RUnlock(); return controller }

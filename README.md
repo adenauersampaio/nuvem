@@ -100,6 +100,24 @@ go run ./cmd/nuvem status
 go run ./cmd/nuvem-desktop
 ```
 
+## Apoie o projeto / Support
+
+Se este software está sendo útil para você, cogite deixar um café (**US$ 1** ou quanto preferir)! O seu apoio incentiva a continuidade e a evolução do Nuvem:
+
+- ☕ **Buy Me a Coffee**: [buymeacoffee.com/adetech](https://buymeacoffee.com/adetech)
+- 🇧🇷 **Pix (Livepix)**: [livepix.gg/adetech](https://livepix.gg/adetech)
+- 💛 **Binance Pay (Cripto)**: [Doar via Binance](https://app.binance.com/uni-qr/request-to-pay?billOrderId=452917517181927424&billType=request_a_payment)
+- 💖 **GitHub Sponsors**: [github.com/sponsors/adenauersampaio](https://github.com/sponsors/adenauersampaio)
+
+---
+
+*If this software is useful to you, consider buying me a coffee (**$1** or whatever you like)! Your support keeps Nuvem active and evolving:*
+
+- ☕ **Buy Me a Coffee**: [buymeacoffee.com/adetech](https://buymeacoffee.com/adetech)
+- 💖 **GitHub Sponsors**: [github.com/sponsors/adenauersampaio](https://github.com/sponsors/adenauersampaio)
+- 💛 **Binance Pay (Crypto)**: [Donate via Binance](https://app.binance.com/uni-qr/request-to-pay?billOrderId=452917517181927424&billType=request_a_payment)
+- 🇧🇷 **Pix (Brazil)**: [livepix.gg/adetech](https://livepix.gg/adetech)
+
 ## Licença
 
 MIT. Consulte [LICENSE](LICENSE).
