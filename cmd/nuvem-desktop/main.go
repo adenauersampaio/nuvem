@@ -11,6 +11,7 @@ import (
 	"github.com/adenauersampaio/nuvem/internal/desktop"
 	"github.com/adenauersampaio/nuvem/internal/gui"
 	"github.com/adenauersampaio/nuvem/internal/i18n"
+	"github.com/adenauersampaio/nuvem/internal/tray"
 )
 
 type desktopController struct{ language i18n.Language }
@@ -51,7 +52,25 @@ func main() {
 		os.Getenv("NUVEM_BINANCE_URL"),
 		os.Getenv("NUVEM_GITHUB_SPONSORS_URL"),
 	)
-	gui.Run(desktopController{language: language}, language == i18n.PortugueseBrazil)
+	ctrl := desktopController{language: language}
+	startTray, endTray := tray.Setup(tray.Actions{
+		OnOpen: func() {
+			gui.ShowWindow()
+		},
+		OnSyncNow: func() {
+			ctrl.SyncNow()
+		},
+		OnToggleService: func() {
+			ctrl.ToggleService()
+		},
+		OnQuit: func() {
+			ctrl.Quit()
+		},
+	}, language == i18n.PortugueseBrazil)
+	startTray()
+	defer endTray()
+
+	gui.Run(ctrl, language == i18n.PortugueseBrazil)
 }
 
 func (c desktopController) Activated() { c.refresh() }
@@ -103,6 +122,7 @@ func (c desktopController) refreshDashboard() {
 		return
 	}
 	service := c.serviceText(state.Service)
+	tray.SetServiceActive(state.Service == "active")
 	gui.SetDashboard(gui.Dashboard{
 		Local:      state.LocalPath,
 		Remote:     state.Remote,
@@ -110,6 +130,33 @@ func (c desktopController) refreshDashboard() {
 		Service:    service,
 		Configured: true,
 	})
+}
+
+func (c desktopController) ToggleService() {
+	state, err := app.DashboardState(context.Background())
+	if err != nil {
+		return
+	}
+	if state.Service == "active" {
+		if err := app.StopService(context.Background()); err != nil {
+			gui.SetStatus(fmt.Sprintf(c.text("Could not stop background service: %v", "Não foi possível parar o serviço: %v"), err), true)
+		} else {
+			gui.SetStatus(c.text("Background service stopped.", "Serviço em segundo plano pausado."), false)
+		}
+	} else {
+		if err := app.StartService(context.Background()); err != nil {
+			gui.SetStatus(fmt.Sprintf(c.text("Could not start background service: %v", "Não foi possível iniciar o serviço: %v"), err), true)
+		} else {
+			gui.SetStatus(c.text("Background service started.", "Serviço em segundo plano iniciado."), false)
+		}
+	}
+	c.refresh()
+}
+
+func (c desktopController) Quit() {
+	_ = app.StopService(context.Background())
+	tray.Quit()
+	gui.Quit()
 }
 
 func (c desktopController) refresh() {

@@ -79,6 +79,14 @@ func SetDonationURLs(bmc, livepix, binance, github string) {
 	C.nuvem_set_donation_urls(cBmc, cLivepix, cBinance, cGithub)
 }
 
+func ShowWindow() {
+	C.nuvem_show_window()
+}
+
+func Quit() {
+	C.nuvem_quit()
+}
+
 func unsafePointer(value *C.char) unsafe.Pointer { return unsafe.Pointer(value) }
 
 func currentController() Controller { mu.RLock(); defer mu.RUnlock(); return controller }

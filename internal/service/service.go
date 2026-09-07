@@ -86,6 +86,21 @@ func (m Manager) Status(ctx context.Context) (string, error) {
 	return strings.TrimSpace(output), err
 }
 
+func (m Manager) Stop(ctx context.Context) error {
+	_, err := m.runner.Run(ctx, "systemctl", "--user", "stop", UnitName)
+	return err
+}
+
+func (m Manager) Start(ctx context.Context) error {
+	_, err := m.runner.Run(ctx, "systemctl", "--user", "start", UnitName)
+	return err
+}
+
+func (m Manager) Restart(ctx context.Context) error {
+	_, err := m.runner.Run(ctx, "systemctl", "--user", "restart", UnitName)
+	return err
+}
+
 func unit(binary string) string {
 	return "[Unit]\n" +
 		"Description=Nuvem continuous synchronization\n" +

@@ -20,10 +20,11 @@ type Config struct {
 // GoogleDriveConfig contains credentials for the application's own OAuth
 // client. Config files are created with owner-only permissions.
 type GoogleDriveConfig struct {
-	ClientID     string `json:"client_id,omitempty"`
-	ClientSecret string `json:"client_secret,omitempty"`
-	Token        string `json:"token,omitempty"`
-	RootFolderID string `json:"root_folder_id,omitempty"`
+	ClientID       string `json:"client_id,omitempty"`
+	ClientSecret   string `json:"client_secret,omitempty"`
+	Token          string `json:"token,omitempty"`
+	RootFolderID   string `json:"root_folder_id,omitempty"`
+	RootFolderName string `json:"root_folder_name,omitempty"`
 }
 
 type SyncConfig struct {

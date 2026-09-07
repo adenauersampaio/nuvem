@@ -15,6 +15,9 @@ import (
 	"github.com/adenauersampaio/nuvem/internal/runlock"
 	"github.com/adenauersampaio/nuvem/internal/service"
 	"github.com/adenauersampaio/nuvem/internal/syncer"
+	"golang.org/x/oauth2"
+	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/option"
 )
 
 type Dashboard struct {
@@ -39,6 +42,19 @@ func DashboardState(ctx context.Context) (Dashboard, error) {
 	if err := cfg.Validate(); err != nil {
 		return Dashboard{}, err
 	}
+	if cfg.GoogleDrive.Token != "" && cfg.GoogleDrive.RootFolderID != "" {
+		if cfg.GoogleDrive.RootFolderName == "" || cfg.Sync.Remote == "GoogleDrive:" {
+			var token oauth2.Token
+			if err := json.Unmarshal([]byte(cfg.GoogleDrive.Token), &token); err == nil {
+				name := fetchGoogleDriveFolderName(ctx, cfg.GoogleDrive.ClientID, cfg.GoogleDrive.ClientSecret, &token, cfg.GoogleDrive.RootFolderID)
+				if name != "" {
+					cfg.GoogleDrive.RootFolderName = name
+					cfg.Sync.Remote = "GoogleDrive:" + name
+					_ = config.SaveDefault(cfg)
+				}
+			}
+		}
+	}
 	unitPath, err := service.DefaultUnitPath()
 	if err != nil {
 		return Dashboard{}, err
@@ -48,6 +64,36 @@ func DashboardState(ctx context.Context) (Dashboard, error) {
 		state = "unknown"
 	}
 	return Dashboard{Configured: true, LocalPath: cfg.Sync.LocalPath, Remote: cfg.Sync.Remote, Interval: cfg.Sync.Interval, Service: state, GoogleClientID: cfg.GoogleDrive.ClientID, GoogleClientSecret: cfg.GoogleDrive.ClientSecret, GoogleFolderLinked: cfg.GoogleDrive.RootFolderID != ""}, nil
+}
+
+func fetchGoogleDriveFolderName(ctx context.Context, clientID, clientSecret string, token *oauth2.Token, folderID string) string {
+	if token == nil || folderID == "" {
+		return ""
+	}
+	if clientID == "" {
+		clientID = googleauth.DefaultClientID
+	}
+	if clientSecret == "" {
+		clientSecret = googleauth.DefaultClientSecret()
+	}
+	oauthConfig := oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://accounts.google.com/o/oauth2/auth",
+			TokenURL: "https://oauth2.googleapis.com/token",
+		},
+	}
+	ts := oauthConfig.TokenSource(ctx, token)
+	srv, err := drive.NewService(ctx, option.WithTokenSource(ts))
+	if err != nil {
+		return ""
+	}
+	file, err := srv.Files.Get(folderID).Fields("name").Context(ctx).Do()
+	if err != nil {
+		return ""
+	}
+	return file.Name
 }
 
 func Save(localPath, remote string, interval time.Duration, clientID, clientSecret string) error {
@@ -94,10 +140,15 @@ func ConnectGoogleDrive(ctx context.Context, clientID, clientSecret string) erro
 	if err != nil {
 		return err
 	}
+	folderName := fetchGoogleDriveFolderName(ctx, clientID, clientSecret, result.Token, result.PickedFolderID)
 	cfg.GoogleDrive.Token = string(encoded)
 	cfg.GoogleDrive.RootFolderID = result.PickedFolderID
-	// The selected folder is the root. No name/path must be created inside it.
-	cfg.Sync.Remote = "GoogleDrive:"
+	cfg.GoogleDrive.RootFolderName = folderName
+	if folderName != "" {
+		cfg.Sync.Remote = "GoogleDrive:" + folderName
+	} else {
+		cfg.Sync.Remote = "GoogleDrive:"
+	}
 	cfg.Sync.Engine = "native"
 	return config.SaveDefault(cfg)
 }
@@ -106,6 +157,22 @@ func RestartService(ctx context.Context) error {
 	returnCode, err := service.OSRunner{}.Run(ctx, "systemctl", "--user", "restart", service.UnitName)
 	if err != nil {
 		return fmt.Errorf("reiniciar serviço: %s%w", returnCode, err)
+	}
+	return nil
+}
+
+func StopService(ctx context.Context) error {
+	returnCode, err := service.OSRunner{}.Run(ctx, "systemctl", "--user", "stop", service.UnitName)
+	if err != nil {
+		return fmt.Errorf("parar serviço: %s%w", returnCode, err)
+	}
+	return nil
+}
+
+func StartService(ctx context.Context) error {
+	returnCode, err := service.OSRunner{}.Run(ctx, "systemctl", "--user", "start", service.UnitName)
+	if err != nil {
+		return fmt.Errorf("iniciar serviço: %s%w", returnCode, err)
 	}
 	return nil
 }

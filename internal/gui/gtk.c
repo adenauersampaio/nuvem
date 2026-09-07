@@ -6,7 +6,8 @@ extern void goNuvemSyncNow(void);
 extern void goNuvemSaveConfig(char *local, char *remote, int minutes);
 extern void goNuvemConnectGoogle(void);
 
-static GtkWidget *window;
+static GtkApplication *app_instance = NULL;
+static GtkWidget *window = NULL;
 static GtkWidget *status_label;
 static GtkWidget *folder_label;
 static GtkWidget *service_label;
@@ -130,7 +131,8 @@ static void set_texts(void) {
   gtk_label_set_text(GTK_LABEL(description_label), portuguese ? "Sua pasta e a nuvem, sem comandos." : "Your folder and the cloud, without commands.");
   gtk_frame_set_label(GTK_FRAME(connection_frame), portuguese ? "Sincronização" : "Synchronization");
   gtk_label_set_text(GTK_LABEL(local_label), portuguese ? "Pasta neste computador" : "Folder on this computer");
-  gtk_label_set_text(GTK_LABEL(remote_label), portuguese ? "Pasta remota (somente configuração legada)" : "Remote folder (legacy setup only)");
+  gtk_label_set_text(GTK_LABEL(remote_label), portuguese ? "Pasta no Google Drive" : "Google Drive folder");
+  gtk_entry_set_placeholder_text(GTK_ENTRY(remote_entry), portuguese ? "Nenhuma pasta conectada" : "No folder connected");
   gtk_label_set_text(GTK_LABEL(frequency_label), portuguese ? "Verificar a cada (minutos)" : "Check every (minutes)");
   gtk_button_set_label(GTK_BUTTON(choose_button), portuguese ? "Escolher pasta" : "Choose folder");
   gtk_button_set_label(GTK_BUTTON(save_button), portuguese ? "Salvar configuração" : "Save setup");
@@ -174,8 +176,20 @@ static void on_choose_folder(GtkButton *button, gpointer data) {
   g_object_unref(dialog);
 }
 
+static gboolean on_close_request(GtkWindow *win, gpointer user_data) {
+  gtk_widget_set_visible(GTK_WIDGET(win), FALSE);
+  return TRUE;
+}
+
 static void activate(GtkApplication *app, gpointer data) {
+  if (window != NULL) {
+    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+    gtk_window_present(GTK_WINDOW(window));
+    return;
+  }
+
   window = gtk_application_window_new(app);
+  g_signal_connect(window, "close-request", G_CALLBACK(on_close_request), NULL);
   gtk_window_set_default_size(GTK_WINDOW(window), 660, 480);
 
   GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -259,7 +273,7 @@ static void activate(GtkApplication *app, gpointer data) {
 
   remote_label = gtk_label_new(NULL);
   remote_entry = gtk_entry_new();
-  gtk_entry_set_placeholder_text(GTK_ENTRY(remote_entry), "GoogleDrive:");
+  gtk_editable_set_editable(GTK_EDITABLE(remote_entry), FALSE);
   gtk_widget_set_halign(remote_label, GTK_ALIGN_START);
   GtkWidget *remote_group = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
   gtk_box_append(GTK_BOX(remote_group), remote_label);
@@ -335,9 +349,35 @@ void nuvem_set_dashboard(const char *local, const char *remote, int minutes, con
 static gboolean update_language(gpointer data) { if (window != NULL) set_texts(); return G_SOURCE_REMOVE; }
 void nuvem_set_portuguese(int enabled) { portuguese = enabled; if (window != NULL) g_idle_add(update_language, NULL); }
 
+static gboolean show_window_idle(gpointer data) {
+  if (window != NULL) {
+    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+    gtk_window_present(GTK_WINDOW(window));
+  }
+  return G_SOURCE_REMOVE;
+}
+
+void nuvem_show_window(void) {
+  g_idle_add(show_window_idle, NULL);
+}
+
+static gboolean quit_idle(gpointer data) {
+  if (app_instance != NULL) {
+    g_application_quit(G_APPLICATION(app_instance));
+  }
+  return G_SOURCE_REMOVE;
+}
+
+void nuvem_quit(void) {
+  g_idle_add(quit_idle, NULL);
+}
+
 void nuvem_run(void) {
   GtkApplication *app = gtk_application_new("io.github.adenauersampaio.Nuvem", G_APPLICATION_DEFAULT_FLAGS);
+  app_instance = app;
   g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+  g_application_hold(G_APPLICATION(app));
   g_application_run(G_APPLICATION(app), 0, NULL);
   g_object_unref(app);
+  app_instance = NULL;
 }
