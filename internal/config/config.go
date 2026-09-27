@@ -96,7 +96,10 @@ func SaveDefault(c Config) error {
 }
 
 func Save(path string, c Config) error {
-	if err := c.Validate(); err != nil {
+	if c.Version == 0 {
+		c.Version = CurrentVersion
+	}
+	if err := c.ValidateForSave(); err != nil {
 		return err
 	}
 	contents, err := json.MarshalIndent(c, "", "  ")
@@ -128,9 +131,41 @@ func Load(path string) (Config, error) {
 	return cfg, nil
 }
 
+// ValidateForSave ensures the configuration contains valid syntax and options
+// before writing to disk, without requiring folders to already exist.
+func (c Config) ValidateForSave() error {
+	if c.Version != 0 && c.Version != CurrentVersion {
+		return fmt.Errorf("versão de configuração incompatível: %d", c.Version)
+	}
+	if c.Sync.LocalPath != "" && !filepath.IsAbs(c.Sync.LocalPath) {
+		return errors.New("a pasta local deve ter caminho absoluto")
+	}
+	if c.Sync.Engine != "" && c.Sync.Engine != "embedded" && c.Sync.Engine != "native" {
+		return fmt.Errorf("motor de sincronização desconhecido: %s", c.Sync.Engine)
+	}
+	if c.Sync.Mode != "" {
+		switch strings.ToLower(c.Sync.Mode) {
+		case "monodirectional", "one-way", "monodirecional", "bidirectional", "two-way", "bidirecional":
+		default:
+			return fmt.Errorf("modo de sincronização desconhecido: %s", c.Sync.Mode)
+		}
+	}
+	if c.Sync.Direction != "" {
+		switch strings.ToLower(c.Sync.Direction) {
+		case "local-to-remote", "upload", "local_to_remote", "local-para-remoto", "remote-to-local", "download", "remote_to_local", "remoto-para-local":
+		default:
+			return fmt.Errorf("sentido de sincronização desconhecido: %s", c.Sync.Direction)
+		}
+	}
+	return nil
+}
+
 func (c Config) Validate() error {
 	if c.Version != CurrentVersion {
 		return fmt.Errorf("versão de configuração incompatível: %d", c.Version)
+	}
+	if c.Sync.LocalPath == "" {
+		return errors.New("a pasta local é obrigatória")
 	}
 	if !filepath.IsAbs(c.Sync.LocalPath) {
 		return errors.New("a pasta local deve ter caminho absoluto")

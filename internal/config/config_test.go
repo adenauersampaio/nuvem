@@ -79,3 +79,31 @@ func TestValidateModeAndDirection(t *testing.T) {
 		t.Fatalf("expected valid config, got: %v", err)
 	}
 }
+
+func TestSavePartialConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nuvem", "config.json")
+	// Partial config: local path not yet created on disk, no remote set yet.
+	cfg := Config{
+		Version: CurrentVersion,
+		Sync: SyncConfig{
+			LocalPath: filepath.Join(t.TempDir(), "not-yet-created"),
+		},
+		GoogleDrive: GoogleDriveConfig{
+			ClientID: "client123",
+		},
+	}
+	if err := Save(path, cfg); err != nil {
+		t.Fatalf("expected Save to allow partial config, got: %v", err)
+	}
+	loaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	if loaded.GoogleDrive.ClientID != "client123" {
+		t.Fatalf("expected client ID client123, got %s", loaded.GoogleDrive.ClientID)
+	}
+	// Full Validate should fail because the directory doesn't exist and remote is empty.
+	if err := loaded.Validate(); err == nil {
+		t.Fatal("expected Validate to fail for partial config")
+	}
+}

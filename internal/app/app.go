@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/adenauersampaio/nuvem/internal/config"
@@ -41,9 +42,6 @@ func DashboardState(ctx context.Context) (Dashboard, error) {
 	if err != nil {
 		return Dashboard{}, err
 	}
-	if err := cfg.Validate(); err != nil {
-		return Dashboard{}, err
-	}
 	if cfg.GoogleDrive.Token != "" && cfg.GoogleDrive.RootFolderID != "" {
 		if cfg.GoogleDrive.RootFolderName == "" || cfg.Sync.Remote == "GoogleDrive:" {
 			var token oauth2.Token
@@ -65,8 +63,9 @@ func DashboardState(ctx context.Context) (Dashboard, error) {
 	if err != nil {
 		state = "unknown"
 	}
+	isConfigured := cfg.Validate() == nil
 	return Dashboard{
-		Configured:         true,
+		Configured:         isConfigured,
 		LocalPath:          cfg.Sync.LocalPath,
 		Remote:             cfg.Sync.Remote,
 		Interval:           cfg.Sync.Interval,
@@ -121,6 +120,14 @@ func SaveWithMode(localPath, remote string, interval time.Duration, clientID, cl
 	if errors.Is(err, os.ErrNotExist) {
 		cfg = config.Config{Version: config.CurrentVersion}
 	}
+	if localPath != "" {
+		if !filepath.IsAbs(localPath) {
+			return errors.New("a pasta local deve ter caminho absoluto")
+		}
+		if err := os.MkdirAll(localPath, 0o755); err != nil {
+			return fmt.Errorf("criar pasta local: %w", err)
+		}
+	}
 	cfg.Sync = config.SyncConfig{
 		LocalPath: localPath,
 		Remote:    remote,
@@ -161,7 +168,16 @@ func ConnectGoogleDrive(ctx context.Context, clientID, clientSecret string) erro
 		return err
 	}
 	cfg, err := config.LoadDefault()
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		cfg = config.Config{
+			Version: config.CurrentVersion,
+			Sync: config.SyncConfig{
+				Interval:  15 * time.Minute,
+				Mode:      config.ModeMonodirectional,
+				Direction: config.DirectionLocalToRemote,
+			},
+		}
+	} else if err != nil {
 		return err
 	}
 	folderName := fetchGoogleDriveFolderName(ctx, clientID, clientSecret, result.Token, result.PickedFolderID)
@@ -203,7 +219,16 @@ func StartService(ctx context.Context) error {
 
 func SaveCurrentClient(clientID, clientSecret string) error {
 	cfg, err := config.LoadDefault()
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		cfg = config.Config{
+			Version: config.CurrentVersion,
+			Sync: config.SyncConfig{
+				Interval:  15 * time.Minute,
+				Mode:      config.ModeMonodirectional,
+				Direction: config.DirectionLocalToRemote,
+			},
+		}
+	} else if err != nil {
 		return err
 	}
 	if clientID == "" {
@@ -231,6 +256,9 @@ func RunOnce(ctx context.Context) error {
 // Run executes one synchronization using the selected engine. Empty retains
 // the established embedded engine; native is opt-in during its rollout.
 func Run(ctx context.Context, syncConfig config.SyncConfig) error {
+	if syncConfig.LocalPath != "" {
+		_ = os.MkdirAll(syncConfig.LocalPath, 0o755)
+	}
 	if err := (config.Config{Version: config.CurrentVersion, Sync: syncConfig}).Validate(); err != nil {
 		return err
 	}

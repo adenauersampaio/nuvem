@@ -122,18 +122,17 @@ func (c desktopController) refreshDashboard() {
 		gui.SetDashboard(gui.Dashboard{Service: c.text("Status unavailable", "Estado indisponível")})
 		return
 	}
-	if !state.Configured {
-		gui.SetDashboard(gui.Dashboard{Service: c.text("Not configured", "Ainda não configurado")})
-		return
-	}
 	service := c.serviceText(state.Service)
+	if !state.Configured {
+		service = c.text("Not configured", "Ainda não configurado")
+	}
 	tray.SetServiceActive(state.Service == "active")
 	gui.SetDashboard(gui.Dashboard{
 		Local:         state.LocalPath,
 		Remote:        state.Remote,
 		Minutes:       int(state.Interval.Minutes()),
 		Service:       service,
-		Configured:    true,
+		Configured:    state.Configured,
 		Bidirectional: state.Mode == config.ModeBidirectional,
 		Direction:     state.Direction,
 	})
@@ -174,6 +173,13 @@ func (c desktopController) refresh() {
 		return
 	}
 	if !state.Configured {
+		cfg, loadErr := config.LoadDefault()
+		if loadErr == nil && cfg.Sync.LocalPath != "" {
+			if valErr := cfg.Validate(); valErr != nil {
+				gui.SetStatus(fmt.Sprintf(c.text("Setup needs attention: %v", "A configuração precisa de atenção: %v"), valErr), true)
+				return
+			}
+		}
 		gui.SetStatus(c.text("Set up a folder to begin continuous synchronization.", "Configure uma pasta para iniciar a sincronização contínua."), false)
 		return
 	}
