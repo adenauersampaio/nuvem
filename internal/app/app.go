@@ -189,6 +189,16 @@ func ConnectGoogleDrive(ctx context.Context, clientID, clientSecret string) erro
 	} else {
 		cfg.Sync.Remote = "GoogleDrive:"
 	}
+	if cfg.Sync.LocalPath == "" {
+		if home, err := os.UserHomeDir(); err == nil && home != "" {
+			candidate := filepath.Join(home, "Nuvem")
+			if folderName != "" {
+				candidate = filepath.Join(home, folderName)
+			}
+			cfg.Sync.LocalPath = candidate
+			_ = os.MkdirAll(candidate, 0o755)
+		}
+	}
 	cfg.Sync.Engine = "native"
 	return config.SaveDefault(cfg)
 }

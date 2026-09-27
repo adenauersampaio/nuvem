@@ -77,6 +77,21 @@ func main() {
 func (c desktopController) Activated() { c.refresh() }
 
 func (c desktopController) SyncNow() {
+	state, err := app.DashboardState(context.Background())
+	if err != nil || !state.Configured {
+		if strings.TrimSpace(state.LocalPath) == "" {
+			gui.SetStatus(c.text("Please choose a local folder on your computer first (click 'Choose folder').", "Por favor, escolha uma pasta neste computador primeiro (clique em 'Escolher pasta')."), true)
+			return
+		}
+		if strings.TrimSpace(state.Remote) == "" {
+			gui.SetStatus(c.text("Please connect to Google Drive first (click 'Connect to Google Drive').", "Por favor, conecte ao Google Drive primeiro (clique em 'Conectar ao Google Drive')."), true)
+			return
+		}
+		if err != nil {
+			gui.SetStatus(fmt.Sprintf(c.text("Setup needs attention: %v", "A configuração precisa de atenção: %v"), err), true)
+			return
+		}
+	}
 	gui.SetStatus(c.text("Synchronizing…", "Sincronizando…"), false)
 	if err := app.RunOnce(context.Background()); err != nil {
 		gui.SetStatus(fmt.Sprintf(c.text("Synchronization needs attention: %v", "A sincronização precisa de atenção: %v"), err), true)
@@ -88,15 +103,30 @@ func (c desktopController) SyncNow() {
 }
 
 func (c desktopController) Save(local, remote string, minutes int, bidirectional bool, direction string) {
+	local = strings.TrimSpace(local)
+	remote = strings.TrimSpace(remote)
+	if local == "" {
+		gui.SetStatus(c.text("Please choose a local folder on your computer first (click 'Choose folder').", "Por favor, escolha uma pasta neste computador primeiro (clique em 'Escolher pasta')."), true)
+		return
+	}
+	if remote == "" {
+		gui.SetStatus(c.text("Please connect to Google Drive first (click 'Connect to Google Drive').", "Por favor, conecte ao Google Drive primeiro (clique em 'Conectar ao Google Drive')."), true)
+		return
+	}
 	mode := config.ModeMonodirectional
 	if bidirectional {
 		mode = config.ModeBidirectional
 	}
-	if err := app.SaveWithMode(strings.TrimSpace(local), strings.TrimSpace(remote), time.Duration(minutes)*time.Minute, "", "", mode, direction); err != nil {
+	if err := app.SaveWithMode(local, remote, time.Duration(minutes)*time.Minute, "", "", mode, direction); err != nil {
 		gui.SetStatus(fmt.Sprintf(c.text("Could not save the setup: %v", "Não foi possível salvar a configuração: %v"), err), true)
 		return
 	}
-	gui.SetStatus(c.text("Configuration saved. The background service will use it on its next check.", "Configuração salva. O serviço em segundo plano a usará na próxima verificação."), false)
+	if err := app.RestartService(context.Background()); err != nil {
+		gui.SetStatus(fmt.Sprintf(c.text("Configuration saved, but could not restart background service: %v", "Configuração salva, mas não foi possível reiniciar o serviço em segundo plano: %v"), err), true)
+		c.refreshDashboard()
+		return
+	}
+	gui.SetStatus(c.text("Configuration saved and background service started.", "Configuração salva e serviço em segundo plano iniciado."), false)
 	c.refreshDashboard()
 }
 

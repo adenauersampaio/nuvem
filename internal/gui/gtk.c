@@ -143,6 +143,9 @@ static void set_texts(void) {
   gtk_label_set_text(GTK_LABEL(description_label), portuguese ? "Sua pasta e a nuvem, sem comandos." : "Your folder and the cloud, without commands.");
   gtk_frame_set_label(GTK_FRAME(connection_frame), portuguese ? "Sincronização" : "Synchronization");
   gtk_label_set_text(GTK_LABEL(local_label), portuguese ? "Pasta neste computador" : "Folder on this computer");
+  if (local_entry != NULL) {
+    gtk_entry_set_placeholder_text(GTK_ENTRY(local_entry), portuguese ? "Nenhuma pasta selecionada (clique em Escolher pasta)" : "No folder selected (click Choose folder)");
+  }
   gtk_label_set_text(GTK_LABEL(remote_label), portuguese ? "Pasta no Google Drive" : "Google Drive folder");
   gtk_entry_set_placeholder_text(GTK_ENTRY(remote_entry), portuguese ? "Nenhuma pasta conectada" : "No folder connected");
   if (mode_label != NULL) {
@@ -193,6 +196,7 @@ static void on_folder_selected(GObject *source, GAsyncResult *result, gpointer d
     gtk_editable_set_text(GTK_EDITABLE(local_entry), path);
     g_free(path);
     g_object_unref(folder);
+    on_save(NULL, NULL);
   }
   if (error != NULL) g_error_free(error);
 }
@@ -286,7 +290,7 @@ static void activate(GtkApplication *app, gpointer data) {
 
   local_label = gtk_label_new(NULL);
   local_entry = gtk_entry_new();
-  gtk_entry_set_placeholder_text(GTK_ENTRY(local_entry), "/home/name/Documents");
+  gtk_entry_set_placeholder_text(GTK_ENTRY(local_entry), portuguese ? "Nenhuma pasta selecionada (clique em Escolher pasta)" : "No folder selected (click Choose folder)");
   GtkWidget *local_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
   gtk_widget_set_hexpand(local_entry, TRUE);
   choose_button = gtk_button_new();
@@ -388,7 +392,7 @@ static gboolean update_dashboard(gpointer data) {
   gtk_widget_set_sensitive(direction_group, !update->bidirectional);
   gtk_label_set_text(GTK_LABEL(folder_label), update->configured ? update->local : (portuguese ? "Escolha uma pasta local; depois conecte e escolha a pasta do Google Drive." : "Choose a local folder; then connect and choose the Google Drive folder."));
   gtk_label_set_text(GTK_LABEL(service_label), update->service);
-  gtk_widget_set_sensitive(sync_button, update->configured);
+  gtk_widget_set_sensitive(sync_button, TRUE);
   gtk_widget_set_sensitive(connect_button, TRUE);
   g_free(update->local); g_free(update->remote); g_free(update->service); g_free(update); return G_SOURCE_REMOVE;
 }
