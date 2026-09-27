@@ -29,6 +29,8 @@ type Dashboard struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleFolderLinked bool
+	Mode               string
+	Direction          string
 }
 
 func DashboardState(ctx context.Context) (Dashboard, error) {
@@ -63,7 +65,18 @@ func DashboardState(ctx context.Context) (Dashboard, error) {
 	if err != nil {
 		state = "unknown"
 	}
-	return Dashboard{Configured: true, LocalPath: cfg.Sync.LocalPath, Remote: cfg.Sync.Remote, Interval: cfg.Sync.Interval, Service: state, GoogleClientID: cfg.GoogleDrive.ClientID, GoogleClientSecret: cfg.GoogleDrive.ClientSecret, GoogleFolderLinked: cfg.GoogleDrive.RootFolderID != ""}, nil
+	return Dashboard{
+		Configured:         true,
+		LocalPath:          cfg.Sync.LocalPath,
+		Remote:             cfg.Sync.Remote,
+		Interval:           cfg.Sync.Interval,
+		Service:            state,
+		GoogleClientID:     cfg.GoogleDrive.ClientID,
+		GoogleClientSecret: cfg.GoogleDrive.ClientSecret,
+		GoogleFolderLinked: cfg.GoogleDrive.RootFolderID != "",
+		Mode:               cfg.Sync.EffectiveMode(),
+		Direction:          cfg.Sync.EffectiveDirection(),
+	}, nil
 }
 
 func fetchGoogleDriveFolderName(ctx context.Context, clientID, clientSecret string, token *oauth2.Token, folderID string) string {
@@ -97,6 +110,10 @@ func fetchGoogleDriveFolderName(ctx context.Context, clientID, clientSecret stri
 }
 
 func Save(localPath, remote string, interval time.Duration, clientID, clientSecret string) error {
+	return SaveWithMode(localPath, remote, interval, clientID, clientSecret, config.ModeMonodirectional, config.DirectionLocalToRemote)
+}
+
+func SaveWithMode(localPath, remote string, interval time.Duration, clientID, clientSecret, mode, direction string) error {
 	cfg, err := config.LoadDefault()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
@@ -104,7 +121,14 @@ func Save(localPath, remote string, interval time.Duration, clientID, clientSecr
 	if errors.Is(err, os.ErrNotExist) {
 		cfg = config.Config{Version: config.CurrentVersion}
 	}
-	cfg.Sync = config.SyncConfig{LocalPath: localPath, Remote: remote, Interval: interval}
+	cfg.Sync = config.SyncConfig{
+		LocalPath: localPath,
+		Remote:    remote,
+		Interval:  interval,
+		Engine:    cfg.Sync.Engine,
+		Mode:      mode,
+		Direction: direction,
+	}
 	if clientID != "" {
 		cfg.GoogleDrive.ClientID = clientID
 	} else if cfg.GoogleDrive.ClientID == "" {

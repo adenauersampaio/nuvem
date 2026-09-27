@@ -3,7 +3,7 @@
 
 extern void goNuvemActivated(void);
 extern void goNuvemSyncNow(void);
-extern void goNuvemSaveConfig(char *local, char *remote, int minutes);
+extern void goNuvemSaveConfig(char *local, char *remote, int minutes, int bidirectional, int direction);
 extern void goNuvemConnectGoogle(void);
 
 static GtkApplication *app_instance = NULL;
@@ -13,6 +13,11 @@ static GtkWidget *folder_label;
 static GtkWidget *service_label;
 static GtkWidget *local_entry;
 static GtkWidget *remote_entry;
+static GtkWidget *mode_label;
+static GtkWidget *mode_switch;
+static GtkWidget *direction_label;
+static GtkWidget *direction_drop;
+static GtkWidget *direction_group;
 static GtkWidget *minutes_spin;
 static GtkWidget *sync_button;
 static GtkWidget *title_label;
@@ -121,6 +126,13 @@ static void on_about(GtkButton *button, gpointer data) {
   gtk_window_present(GTK_WINDOW(dialog));
 }
 
+static void on_mode_switched(GObject *source, GParamSpec *pspec, gpointer data) {
+  gboolean active = gtk_switch_get_active(GTK_SWITCH(mode_switch));
+  if (direction_group != NULL) {
+    gtk_widget_set_sensitive(direction_group, !active);
+  }
+}
+
 static void set_texts(void) {
   gtk_window_set_title(GTK_WINDOW(window), "Nuvem");
   gtk_label_set_text(GTK_LABEL(title_label), "Nuvem");
@@ -133,6 +145,20 @@ static void set_texts(void) {
   gtk_label_set_text(GTK_LABEL(local_label), portuguese ? "Pasta neste computador" : "Folder on this computer");
   gtk_label_set_text(GTK_LABEL(remote_label), portuguese ? "Pasta no Google Drive" : "Google Drive folder");
   gtk_entry_set_placeholder_text(GTK_ENTRY(remote_entry), portuguese ? "Nenhuma pasta conectada" : "No folder connected");
+  if (mode_label != NULL) {
+    gtk_label_set_text(GTK_LABEL(mode_label), portuguese ? "Sincronização bidirecional" : "Bidirectional sync");
+  }
+  if (direction_label != NULL) {
+    gtk_label_set_text(GTK_LABEL(direction_label), portuguese ? "Sentido da sincronização" : "Sync direction");
+  }
+  if (direction_drop != NULL) {
+    const char * const pt_dirs[] = {"Computador → Google Drive (padrão)", "Google Drive → Computador", NULL};
+    const char * const en_dirs[] = {"Local machine → Google Drive (default)", "Google Drive → Local machine", NULL};
+    guint selected = gtk_drop_down_get_selected(GTK_DROP_DOWN(direction_drop));
+    GtkStringList *strings = gtk_string_list_new(portuguese ? pt_dirs : en_dirs);
+    gtk_drop_down_set_model(GTK_DROP_DOWN(direction_drop), G_LIST_MODEL(strings));
+    gtk_drop_down_set_selected(GTK_DROP_DOWN(direction_drop), selected);
+  }
   gtk_label_set_text(GTK_LABEL(frequency_label), portuguese ? "Verificar a cada (minutos)" : "Check every (minutes)");
   gtk_button_set_label(GTK_BUTTON(choose_button), portuguese ? "Escolher pasta" : "Choose folder");
   gtk_button_set_label(GTK_BUTTON(save_button), portuguese ? "Salvar configuração" : "Save setup");
@@ -149,7 +175,9 @@ static void on_save(GtkButton *button, gpointer data) {
   const char *local = gtk_editable_get_text(GTK_EDITABLE(local_entry));
   const char *remote = gtk_editable_get_text(GTK_EDITABLE(remote_entry));
   int minutes = (int)gtk_spin_button_get_value(GTK_SPIN_BUTTON(minutes_spin));
-  goNuvemSaveConfig((char *)local, (char *)remote, minutes);
+  int bidirectional = gtk_switch_get_active(GTK_SWITCH(mode_switch)) ? 1 : 0;
+  int direction = (int)gtk_drop_down_get_selected(GTK_DROP_DOWN(direction_drop));
+  goNuvemSaveConfig((char *)local, (char *)remote, minutes, bidirectional, direction);
 }
 
 static void on_connect(GtkButton *button, gpointer data) {
@@ -280,6 +308,28 @@ static void activate(GtkApplication *app, gpointer data) {
   gtk_box_append(GTK_BOX(remote_group), remote_entry);
   gtk_box_append(GTK_BOX(form), remote_group);
 
+  mode_label = gtk_label_new(NULL);
+  gtk_widget_set_halign(mode_label, GTK_ALIGN_START);
+  gtk_widget_set_hexpand(mode_label, TRUE);
+  mode_switch = gtk_switch_new();
+  gtk_widget_set_halign(mode_switch, GTK_ALIGN_END);
+  g_signal_connect(mode_switch, "notify::active", G_CALLBACK(on_mode_switched), NULL);
+  GtkWidget *mode_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_append(GTK_BOX(mode_row), mode_label);
+  gtk_box_append(GTK_BOX(mode_row), mode_switch);
+  gtk_box_append(GTK_BOX(form), mode_row);
+
+  direction_label = gtk_label_new(NULL);
+  gtk_widget_set_halign(direction_label, GTK_ALIGN_START);
+  gtk_widget_set_hexpand(direction_label, TRUE);
+  const char * const initial_dirs[] = {"Computador → Google Drive (padrão)", "Google Drive → Computador", NULL};
+  direction_drop = gtk_drop_down_new_from_strings(initial_dirs);
+  gtk_widget_set_halign(direction_drop, GTK_ALIGN_END);
+  direction_group = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_append(GTK_BOX(direction_group), direction_label);
+  gtk_box_append(GTK_BOX(direction_group), direction_drop);
+  gtk_box_append(GTK_BOX(form), direction_group);
+
   frequency_label = gtk_label_new(NULL);
   gtk_widget_set_halign(frequency_label, GTK_ALIGN_START);
   gtk_widget_set_hexpand(frequency_label, TRUE);
@@ -327,22 +377,27 @@ void nuvem_set_status(const char *text, int is_error) {
   g_idle_add(update_status, update);
 }
 
-typedef struct { char *local; char *remote; char *service; int minutes; int configured; } DashboardUpdate;
+typedef struct { char *local; char *remote; char *service; int minutes; int configured; int bidirectional; int direction; } DashboardUpdate;
 static gboolean update_dashboard(gpointer data) {
   DashboardUpdate *update = data;
   gtk_editable_set_text(GTK_EDITABLE(local_entry), update->local);
   gtk_editable_set_text(GTK_EDITABLE(remote_entry), update->remote);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(minutes_spin), update->minutes > 0 ? update->minutes : 15);
+  gtk_switch_set_active(GTK_SWITCH(mode_switch), update->bidirectional ? TRUE : FALSE);
+  gtk_drop_down_set_selected(GTK_DROP_DOWN(direction_drop), update->direction > 0 ? 1 : 0);
+  gtk_widget_set_sensitive(direction_group, !update->bidirectional);
   gtk_label_set_text(GTK_LABEL(folder_label), update->configured ? update->local : (portuguese ? "Escolha uma pasta local; depois conecte e escolha a pasta do Google Drive." : "Choose a local folder; then connect and choose the Google Drive folder."));
   gtk_label_set_text(GTK_LABEL(service_label), update->service);
   gtk_widget_set_sensitive(sync_button, update->configured);
   gtk_widget_set_sensitive(connect_button, TRUE);
   g_free(update->local); g_free(update->remote); g_free(update->service); g_free(update); return G_SOURCE_REMOVE;
 }
-void nuvem_set_dashboard(const char *local, const char *remote, int minutes, const char *service, int configured) {
+void nuvem_set_dashboard(const char *local, const char *remote, int minutes, const char *service, int configured, int bidirectional, int direction) {
   DashboardUpdate *update = g_new(DashboardUpdate, 1);
   update->local = g_strdup(local); update->remote = g_strdup(remote); update->service = g_strdup(service);
   update->minutes = minutes; update->configured = configured;
+  update->bidirectional = bidirectional;
+  update->direction = direction;
   g_idle_add(update_dashboard, update);
 }
 

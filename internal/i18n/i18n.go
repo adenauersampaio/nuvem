@@ -27,32 +27,42 @@ const (
 	KeySupportBMC       string   = "support_bmc"
 	KeySupportLivepix   string   = "support_livepix"
 	KeySupportBinance   string   = "support_binance"
-	KeySupportGitHub    string   = "support_github"
-	KeyClose            string   = "close"
+	KeySupportGitHub        string   = "support_github"
+	KeyClose                string   = "close"
+	KeyConfigValidDetailed  string   = "config_valid_detailed"
+	KeyModeMonodirectional  string   = "mode_monodirectional"
+	KeyModeBidirectional    string   = "mode_bidirectional"
+	KeyDirLocalToRemote     string   = "dir_local_to_remote"
+	KeyDirRemoteToLocal     string   = "dir_remote_to_local"
 )
 
 var messages = map[Language]map[string]string{
 	English: {
-		KeyError:            "error:",
-		KeyUnknownCommand:   "unknown command %q; use 'nuvem help'",
-		KeyConfigMissing:    "No configuration exists yet. Run 'nuvem init --local <folder> --remote <remote>'.",
-		KeyConfigCreated:    "Configuration created at %s. Run 'nuvem doctor' to verify it.\n",
-		KeyConfigValid:      "Valid configuration for %s → %s.\n",
-		KeySyncFailed:       "sync failed:",
-		KeyInvalidLanguage:  "unsupported language %q; use en or pt-BR",
-		KeyServiceInstalled: "Nuvem service installed and started.\n",
-		KeyServiceRemoved:   "Nuvem service stopped and removed.\n",
-		KeyServiceStatus:    "Service status: %s\n",
-		KeySyncInProgress:   "a Nuvem synchronization is already running",
-		KeyRemoteImported:   "Drive profile imported into Nuvem's private configuration.\n",
-		KeyAbout:            "About",
-		KeyAboutTitle:       "About Nuvem",
-		KeyAboutCoffee:      "If this software is useful to you, consider buying me a coffee... $1",
-		KeySupportBMC:       "Buy Me a Coffee ($1) ☕",
-		KeySupportLivepix:   "Support with Pix (Livepix) 🇧🇷",
-		KeySupportBinance:   "Support via Binance Pay (Crypto) 💛",
-		KeySupportGitHub:    "GitHub Sponsors 💖",
-		KeyClose:            "Close",
+		KeyError:               "error:",
+		KeyUnknownCommand:      "unknown command %q; use 'nuvem help'",
+		KeyConfigMissing:       "No configuration exists yet. Run 'nuvem init --local <folder> --remote <remote>'.",
+		KeyConfigCreated:       "Configuration created at %s. Run 'nuvem doctor' to verify it.\n",
+		KeyConfigValid:         "Valid configuration for %s → %s.\n",
+		KeyConfigValidDetailed: "Valid configuration for %s → %s (Mode: %s, Direction: %s).\n",
+		KeyModeMonodirectional: "monodirectional",
+		KeyModeBidirectional:   "bidirectional",
+		KeyDirLocalToRemote:    "local machine → Google Drive",
+		KeyDirRemoteToLocal:    "Google Drive → local machine",
+		KeySyncFailed:          "sync failed:",
+		KeyInvalidLanguage:     "unsupported language %q; use en or pt-BR",
+		KeyServiceInstalled:    "Nuvem service installed and started.\n",
+		KeyServiceRemoved:      "Nuvem service stopped and removed.\n",
+		KeyServiceStatus:       "Service status: %s\n",
+		KeySyncInProgress:      "a Nuvem synchronization is already running",
+		KeyRemoteImported:      "Drive profile imported into Nuvem's private configuration.\n",
+		KeyAbout:               "About",
+		KeyAboutTitle:          "About Nuvem",
+		KeyAboutCoffee:         "If this software is useful to you, consider buying me a coffee... $1",
+		KeySupportBMC:          "Buy Me a Coffee ($1) ☕",
+		KeySupportLivepix:      "Support with Pix (Livepix) 🇧🇷",
+		KeySupportBinance:      "Support via Binance Pay (Crypto) 💛",
+		KeySupportGitHub:       "GitHub Sponsors 💖",
+		KeyClose:               "Close",
 		KeyHelp: `Nuvem — continuous Google Drive sync for Linux
 
 Usage:
@@ -70,26 +80,31 @@ The language follows NUVEM_LANG or LANG when --lang is omitted.
 `,
 	},
 	PortugueseBrazil: {
-		KeyError:            "erro:",
-		KeyUnknownCommand:   "comando desconhecido %q; use 'nuvem help'",
-		KeyConfigMissing:    "Configuração ainda não criada. Execute 'nuvem init --local <pasta> --remote <remoto>'.",
-		KeyConfigCreated:    "Configuração criada em %s. Execute 'nuvem doctor' para conferir.\n",
-		KeyConfigValid:      "Configuração válida para %s → %s.\n",
-		KeySyncFailed:       "sincronização falhou:",
-		KeyInvalidLanguage:  "idioma não suportado %q; use en ou pt-BR",
-		KeyServiceInstalled: "Serviço do Nuvem instalado e iniciado.\n",
-		KeyServiceRemoved:   "Serviço do Nuvem interrompido e removido.\n",
-		KeyServiceStatus:    "Estado do serviço: %s\n",
-		KeySyncInProgress:   "uma sincronização do Nuvem já está em andamento",
-		KeyRemoteImported:   "Perfil do Drive importado para a configuração privada do Nuvem.\n",
-		KeyAbout:            "Sobre",
-		KeyAboutTitle:       "Sobre o Nuvem",
-		KeyAboutCoffee:      "Se este software está sendo útil, cogite deixar um café... US$ 1",
-		KeySupportBMC:       "Deixar um café (Buy Me a Coffee) ☕",
-		KeySupportLivepix:   "Apoiar via Pix (Livepix) 🇧🇷",
-		KeySupportBinance:   "Apoiar via Binance Pay (Cripto) 💛",
-		KeySupportGitHub:    "GitHub Sponsors 💖",
-		KeyClose:            "Fechar",
+		KeyError:               "erro:",
+		KeyUnknownCommand:      "comando desconhecido %q; use 'nuvem help'",
+		KeyConfigMissing:       "Configuração ainda não criada. Execute 'nuvem init --local <pasta> --remote <remoto>'.",
+		KeyConfigCreated:       "Configuração criada em %s. Execute 'nuvem doctor' para conferir.\n",
+		KeyConfigValid:         "Configuração válida para %s → %s.\n",
+		KeyConfigValidDetailed: "Configuração válida para %s → %s (Modo: %s, Sentido: %s).\n",
+		KeyModeMonodirectional: "monodirecional",
+		KeyModeBidirectional:   "bidirecional",
+		KeyDirLocalToRemote:    "máquina local → Google Drive",
+		KeyDirRemoteToLocal:    "Google Drive → máquina local",
+		KeySyncFailed:          "sincronização falhou:",
+		KeyInvalidLanguage:     "idioma não suportado %q; use en ou pt-BR",
+		KeyServiceInstalled:    "Serviço do Nuvem instalado e iniciado.\n",
+		KeyServiceRemoved:      "Serviço do Nuvem interrompido e removido.\n",
+		KeyServiceStatus:       "Estado do serviço: %s\n",
+		KeySyncInProgress:      "uma sincronização do Nuvem já está em andamento",
+		KeyRemoteImported:      "Perfil do Drive importado para a configuração privada do Nuvem.\n",
+		KeyAbout:               "Sobre",
+		KeyAboutTitle:          "Sobre o Nuvem",
+		KeyAboutCoffee:         "Se este software está sendo útil, cogite deixar um café... US$ 1",
+		KeySupportBMC:          "Deixar um café (Buy Me a Coffee) ☕",
+		KeySupportLivepix:      "Apoiar via Pix (Livepix) 🇧🇷",
+		KeySupportBinance:      "Apoiar via Binance Pay (Cripto) 💛",
+		KeySupportGitHub:       "GitHub Sponsors 💖",
+		KeyClose:               "Fechar",
 		KeyHelp: `Nuvem — sincronização contínua com Google Drive no Linux
 
 Uso:

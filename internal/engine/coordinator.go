@@ -2,8 +2,10 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 )
 
 // Store is a provider endpoint. Local folders and cloud providers implement
@@ -21,14 +23,15 @@ type Recorder interface {
 	Record(context.Context, Action) error
 }
 
-// Coordinator applies the newest-wins plan between two stores. It purposely
-// does not delete files: deletion tracking needs a stable historical baseline
-// and will be added only once it can be performed safely.
+// Coordinator applies the synchronization plan between two stores based on
+// the configured Mode and Direction.
 type Coordinator struct {
-	Local    Store
-	Remote   Store
-	Audit    Recorder
-	Baseline BaselineStore
+	Local     Store
+	Remote    Store
+	Audit     Recorder
+	Baseline  BaselineStore
+	Mode      string
+	Direction string
 }
 
 func (c Coordinator) Sync(ctx context.Context) ([]Action, error) {
@@ -50,7 +53,14 @@ func (c Coordinator) Sync(ctx context.Context) ([]Action, error) {
 			return nil, fmt.Errorf("load baseline: %w", err)
 		}
 	}
-	actions := PlanWithBaseline(local, remote, baseline)
+	var actions []Action
+	if c.Mode == "bidirectional" {
+		actions = PlanWithBaseline(local, remote, baseline)
+	} else if c.Direction == "remote-to-local" {
+		actions = PlanMonodirectional(remote, local, baseline, Remote, Local)
+	} else {
+		actions = PlanMonodirectional(local, remote, baseline, Local, Remote)
+	}
 	for _, action := range actions {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -72,6 +82,9 @@ func (c Coordinator) Sync(ctx context.Context) ([]Action, error) {
 		}
 		content, entry, err := source.Open(ctx, action.Path)
 		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
 			return nil, fmt.Errorf("open %s: %w", action.Path, err)
 		}
 		err = target.Put(ctx, action.Path, entry, content)

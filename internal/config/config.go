@@ -6,10 +6,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-const CurrentVersion = 1
+const (
+	CurrentVersion = 1
+
+	ModeMonodirectional = "monodirectional"
+	ModeBidirectional   = "bidirectional"
+
+	DirectionLocalToRemote = "local-to-remote"
+	DirectionRemoteToLocal = "remote-to-local"
+)
 
 type Config struct {
 	Version     int               `json:"version"`
@@ -32,6 +41,26 @@ type SyncConfig struct {
 	Remote    string        `json:"remote"`
 	Interval  time.Duration `json:"interval"`
 	Engine    string        `json:"engine,omitempty"`
+	Mode      string        `json:"mode,omitempty"`
+	Direction string        `json:"direction,omitempty"`
+}
+
+func (s SyncConfig) EffectiveMode() string {
+	switch strings.ToLower(s.Mode) {
+	case "bidirectional", "two-way", "bidirecional":
+		return ModeBidirectional
+	default:
+		return ModeMonodirectional
+	}
+}
+
+func (s SyncConfig) EffectiveDirection() string {
+	switch strings.ToLower(s.Direction) {
+	case "remote-to-local", "download", "remote_to_local", "remoto-para-local":
+		return DirectionRemoteToLocal
+	default:
+		return DirectionLocalToRemote
+	}
 }
 
 func DefaultPath() (string, error) {
@@ -121,6 +150,20 @@ func (c Config) Validate() error {
 	}
 	if c.Sync.Engine != "" && c.Sync.Engine != "embedded" && c.Sync.Engine != "native" {
 		return fmt.Errorf("motor de sincronização desconhecido: %s", c.Sync.Engine)
+	}
+	if c.Sync.Mode != "" {
+		switch strings.ToLower(c.Sync.Mode) {
+		case "monodirectional", "one-way", "monodirecional", "bidirectional", "two-way", "bidirecional":
+		default:
+			return fmt.Errorf("modo de sincronização desconhecido: %s", c.Sync.Mode)
+		}
+	}
+	if c.Sync.Direction != "" {
+		switch strings.ToLower(c.Sync.Direction) {
+		case "local-to-remote", "upload", "local_to_remote", "local-para-remoto", "remote-to-local", "download", "remote_to_local", "remoto-para-local":
+		default:
+			return fmt.Errorf("sentido de sincronização desconhecido: %s", c.Sync.Direction)
+		}
 	}
 	return nil
 }

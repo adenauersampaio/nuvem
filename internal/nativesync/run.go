@@ -61,7 +61,14 @@ func Run(ctx context.Context, syncConfig config.SyncConfig) ([]engine.Action, er
 	if err != nil {
 		return nil, err
 	}
-	actions, err := (engine.Coordinator{Local: engine.LocalStore{Root: syncConfig.LocalPath}, Remote: remote, Audit: engine.Journal{Path: journalPath}, Baseline: engine.FileBaseline{Path: baselinePath}}).Sync(ctx)
+	actions, err := (engine.Coordinator{
+		Local:     engine.LocalStore{Root: syncConfig.LocalPath},
+		Remote:    remote,
+		Audit:     engine.Journal{Path: journalPath},
+		Baseline:  engine.FileBaseline{Path: baselinePath},
+		Mode:      syncConfig.EffectiveMode(),
+		Direction: syncConfig.EffectiveDirection(),
+	}).Sync(ctx)
 	if err != nil {
 		return nil, err
 	}

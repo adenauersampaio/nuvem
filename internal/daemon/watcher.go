@@ -5,10 +5,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/adenauersampaio/nuvem/internal/engine"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -174,30 +174,9 @@ func (fw *FolderWatcher) addRecursive(dir string) error {
 }
 
 func isIgnoredDir(name string) bool {
-	return strings.HasPrefix(name, ".")
+	return engine.IsIgnoredDir(name)
 }
 
 func isIgnoredFile(name string) bool {
-	// Hidden files (e.g. .git, .goutputstream, .nuvem)
-	if strings.HasPrefix(name, ".") {
-		return true
-	}
-	// Backup or temporary editor files
-	if strings.HasSuffix(name, "~") || strings.HasSuffix(name, "#") {
-		return true
-	}
-	// Common lock and temporary patterns
-	lower := strings.ToLower(name)
-	if strings.Contains(lower, ".~lock.") || strings.HasPrefix(lower, "~$") {
-		return true
-	}
-	if strings.HasSuffix(lower, ".tmp") ||
-		strings.HasSuffix(lower, ".swp") ||
-		strings.HasSuffix(lower, ".swo") ||
-		strings.HasSuffix(lower, ".bak") ||
-		strings.HasSuffix(lower, ".crdownload") ||
-		strings.HasSuffix(lower, ".part") {
-		return true
-	}
-	return false
+	return engine.IsIgnoredFile(name)
 }

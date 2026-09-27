@@ -61,3 +61,19 @@ func TestLocalSnapshotUsesDriveCompatibleMD5(t *testing.T) {
 		t.Fatalf("entries = %#v, want MD5 %s", entries, want)
 	}
 }
+
+func TestLocalSnapshotIgnoresLockAndHiddenFiles(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"note.txt", ".~lock.note.docx#", ".hidden", "~$doc.docx"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte("content"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	entries, err := (LocalStore{Root: root}).Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Path != "note.txt" {
+		t.Fatalf("unexpected entries: %#v", entries)
+	}
+}

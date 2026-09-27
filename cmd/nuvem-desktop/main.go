@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/adenauersampaio/nuvem/internal/app"
+	"github.com/adenauersampaio/nuvem/internal/config"
 	"github.com/adenauersampaio/nuvem/internal/desktop"
 	"github.com/adenauersampaio/nuvem/internal/gui"
 	"github.com/adenauersampaio/nuvem/internal/i18n"
@@ -86,8 +87,12 @@ func (c desktopController) SyncNow() {
 	c.refreshDashboard()
 }
 
-func (c desktopController) Save(local, remote string, minutes int) {
-	if err := app.Save(strings.TrimSpace(local), strings.TrimSpace(remote), time.Duration(minutes)*time.Minute, "", ""); err != nil {
+func (c desktopController) Save(local, remote string, minutes int, bidirectional bool, direction string) {
+	mode := config.ModeMonodirectional
+	if bidirectional {
+		mode = config.ModeBidirectional
+	}
+	if err := app.SaveWithMode(strings.TrimSpace(local), strings.TrimSpace(remote), time.Duration(minutes)*time.Minute, "", "", mode, direction); err != nil {
 		gui.SetStatus(fmt.Sprintf(c.text("Could not save the setup: %v", "Não foi possível salvar a configuração: %v"), err), true)
 		return
 	}
@@ -124,11 +129,13 @@ func (c desktopController) refreshDashboard() {
 	service := c.serviceText(state.Service)
 	tray.SetServiceActive(state.Service == "active")
 	gui.SetDashboard(gui.Dashboard{
-		Local:      state.LocalPath,
-		Remote:     state.Remote,
-		Minutes:    int(state.Interval.Minutes()),
-		Service:    service,
-		Configured: true,
+		Local:         state.LocalPath,
+		Remote:        state.Remote,
+		Minutes:       int(state.Interval.Minutes()),
+		Service:       service,
+		Configured:    true,
+		Bidirectional: state.Mode == config.ModeBidirectional,
+		Direction:     state.Direction,
 	})
 }
 

@@ -36,6 +36,7 @@ type Store struct {
 	rootID      string
 	mu          sync.RWMutex
 	files       map[string]*drive.File
+	folders     map[string]string
 }
 
 func New(ctx context.Context, profile rcloneconfig.DriveProfile, remotePath string) (*Store, error) {
@@ -58,7 +59,7 @@ func New(ctx context.Context, profile rcloneconfig.DriveProfile, remotePath stri
 	if err != nil {
 		return nil, fmt.Errorf("criar cliente do Google Drive: %w", err)
 	}
-	store := &Store{service: service, tokenSource: source, rootID: profile.RootFolderID, files: make(map[string]*drive.File)}
+	store := &Store{service: service, tokenSource: source, rootID: profile.RootFolderID, files: make(map[string]*drive.File), folders: make(map[string]string)}
 	if store.rootID == "" {
 		store.rootID = "root"
 	}
@@ -102,11 +103,23 @@ func (s *Store) snapshotFolder(ctx context.Context, parentID, prefix string, ind
 			relative = prefix + "/" + file.Name
 		}
 		if file.MimeType == folderMimeType {
+			if engine.IsIgnoredDir(file.Name) {
+				continue
+			}
+			s.mu.Lock()
+			if s.folders == nil {
+				s.folders = make(map[string]string)
+			}
+			s.folders[parentID+"/"+file.Name] = file.Id
+			s.mu.Unlock()
 			nested, err := s.snapshotFolder(ctx, file.Id, relative, index)
 			if err != nil {
 				return nil, err
 			}
 			entries = append(entries, nested...)
+			continue
+		}
+		if engine.IsIgnoredFile(file.Name) {
 			continue
 		}
 		if strings.HasPrefix(file.MimeType, "application/vnd.google-apps.") {
@@ -161,13 +174,14 @@ func (s *Store) Put(ctx context.Context, relative string, entry engine.Entry, co
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
-	metadata := &drive.File{Name: name, Parents: []string{parentID}, MimeType: contentType}
 	if existing == nil {
+		metadata := &drive.File{Name: name, Parents: []string{parentID}, MimeType: contentType}
 		_, err = s.service.Files.Create(metadata).SupportsAllDrives(true).Media(content, googleapi.ContentType(contentType)).Context(ctx).Do()
 	} else {
 		if existing.MimeType == folderMimeType {
 			return fmt.Errorf("%q is a folder in Google Drive", relative)
 		}
+		metadata := &drive.File{Name: name, MimeType: contentType}
 		_, err = s.service.Files.Update(existing.Id, metadata).SupportsAllDrives(true).Media(content, googleapi.ContentType(contentType)).Context(ctx).Do()
 	}
 	if err != nil {
@@ -193,6 +207,14 @@ func (s *Store) Remove(ctx context.Context, relative string) error {
 }
 
 func (s *Store) ensureFolder(ctx context.Context, parentID, name string) (string, error) {
+	key := parentID + "/" + name
+	s.mu.RLock()
+	if id, ok := s.folders[key]; ok {
+		s.mu.RUnlock()
+		return id, nil
+	}
+	s.mu.RUnlock()
+
 	folder, err := s.findOne(ctx, parentID, name)
 	if err != nil {
 		return "", err
@@ -201,12 +223,24 @@ func (s *Store) ensureFolder(ctx context.Context, parentID, name string) (string
 		if folder.MimeType != folderMimeType {
 			return "", fmt.Errorf("%q não é uma pasta no Google Drive", name)
 		}
+		s.mu.Lock()
+		if s.folders == nil {
+			s.folders = make(map[string]string)
+		}
+		s.folders[key] = folder.Id
+		s.mu.Unlock()
 		return folder.Id, nil
 	}
 	created, err := s.service.Files.Create(&drive.File{Name: name, MimeType: folderMimeType, Parents: []string{parentID}}).SupportsAllDrives(true).Context(ctx).Do()
 	if err != nil {
 		return "", fmt.Errorf("criar pasta remota %q: %w", name, err)
 	}
+	s.mu.Lock()
+	if s.folders == nil {
+		s.folders = make(map[string]string)
+	}
+	s.folders[key] = created.Id
+	s.mu.Unlock()
 	return created.Id, nil
 }
 
@@ -217,7 +251,7 @@ func (s *Store) findOne(ctx context.Context, parentID, name string) (*drive.File
 		return nil, fmt.Errorf("procurar %q: %w", name, err)
 	}
 	if len(list.Files) > 1 {
-		return nil, fmt.Errorf("há mais de um item chamado %q na pasta remota", name)
+		return list.Files[0], nil
 	}
 	if len(list.Files) == 0 {
 		return nil, nil

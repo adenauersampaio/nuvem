@@ -142,6 +142,48 @@ func PlanWithBaseline(local, remote []Entry, baseline Snapshot) []Action {
 	return actions
 }
 
+// PlanMonodirectional creates a one-way synchronization plan from source to target.
+// The source is the single source of truth. Under no circumstance are operations
+// planned that would delete or overwrite files on the source side.
+func PlanMonodirectional(source, target []Entry, baseline Snapshot, sourceSide, targetSide Side) []Action {
+	sourceByPath, targetByPath := entriesByPath(source), entriesByPath(target)
+	paths := make(map[string]struct{}, len(sourceByPath)+len(targetByPath)+len(baseline.Entries))
+	for path := range sourceByPath {
+		paths[path] = struct{}{}
+	}
+	for path := range targetByPath {
+		paths[path] = struct{}{}
+	}
+	for path := range baseline.Entries {
+		paths[path] = struct{}{}
+	}
+
+	actions := make([]Action, 0)
+	for path := range paths {
+		srcEntry, srcExists := sourceByPath[path]
+		tgtEntry, tgtExists := targetByPath[path]
+		previous, existedBefore := baseline.Entries[path]
+
+		switch {
+		case srcExists && !tgtExists:
+			actions = append(actions, Action{Path: path, Source: sourceSide, Target: targetSide, Reason: string(sourceSide) + "-only", Operation: Copy})
+
+		case srcExists && tgtExists:
+			if Same(srcEntry, tgtEntry) {
+				continue
+			}
+			actions = append(actions, Action{Path: path, Source: sourceSide, Target: targetSide, Reason: string(sourceSide) + "-modified", Operation: Copy})
+
+		case !srcExists && tgtExists:
+			if existedBefore && Same(tgtEntry, previous) {
+				actions = append(actions, Action{Path: path, Source: sourceSide, Target: targetSide, Reason: string(sourceSide) + "-deleted", Operation: Delete})
+			}
+		}
+	}
+	sort.Slice(actions, func(i, j int) bool { return cmp.Compare(actions[i].Path, actions[j].Path) < 0 })
+	return actions
+}
+
 func Same(left, right Entry) bool {
 	if left.Hash != "" && right.Hash != "" {
 		return left.Hash == right.Hash

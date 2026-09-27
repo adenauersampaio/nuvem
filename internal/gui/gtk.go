@@ -16,16 +16,18 @@ import (
 type Controller interface {
 	Activated()
 	SyncNow()
-	Save(local, remote string, minutes int)
+	Save(local, remote string, minutes int, bidirectional bool, direction string)
 	ConnectGoogleDrive()
 }
 
 type Dashboard struct {
-	Local      string
-	Remote     string
-	Minutes    int
-	Service    string
-	Configured bool
+	Local         string
+	Remote        string
+	Minutes       int
+	Service       string
+	Configured    bool
+	Bidirectional bool
+	Direction     string
 }
 
 var (
@@ -64,7 +66,15 @@ func SetDashboard(value Dashboard) {
 	if value.Configured {
 		configured = 1
 	}
-	C.nuvem_set_dashboard(local, remote, C.int(value.Minutes), service, C.int(configured))
+	bidirectional := 0
+	if value.Bidirectional {
+		bidirectional = 1
+	}
+	dirIdx := 0
+	if value.Direction == "remote-to-local" {
+		dirIdx = 1
+	}
+	C.nuvem_set_dashboard(local, remote, C.int(value.Minutes), service, C.int(configured), C.int(bidirectional), C.int(dirIdx))
 }
 
 func SetDonationURLs(bmc, livepix, binance, github string) {
@@ -106,9 +116,13 @@ func goNuvemSyncNow() {
 }
 
 //export goNuvemSaveConfig
-func goNuvemSaveConfig(local, remote *C.char, minutes C.int) {
+func goNuvemSaveConfig(local, remote *C.char, minutes, bidirectional, direction C.int) {
 	if c := currentController(); c != nil {
-		go c.Save(C.GoString(local), C.GoString(remote), int(minutes))
+		dir := "local-to-remote"
+		if int(direction) == 1 {
+			dir = "remote-to-local"
+		}
+		go c.Save(C.GoString(local), C.GoString(remote), int(minutes), int(bidirectional) == 1, dir)
 	}
 }
 

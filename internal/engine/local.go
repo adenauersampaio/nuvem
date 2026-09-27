@@ -28,10 +28,14 @@ func (s LocalStore) Snapshot(ctx context.Context) ([]Entry, error) {
 			return err
 		}
 		trashRoot := filepath.Join(s.Root, ".nuvem-trash")
-		if d.IsDir() && path == trashRoot {
-			return filepath.SkipDir
+		name := d.Name()
+		if d.IsDir() {
+			if path == trashRoot || (IsIgnoredDir(name) && path != s.Root) {
+				return filepath.SkipDir
+			}
+			return nil
 		}
-		if d.IsDir() || d.Type()&os.ModeSymlink != 0 {
+		if d.Type()&os.ModeSymlink != 0 || IsIgnoredFile(name) {
 			return nil
 		}
 		info, err := d.Info()

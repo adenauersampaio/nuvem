@@ -24,7 +24,7 @@ import (
 	"github.com/adenauersampaio/nuvem/internal/syncer"
 )
 
-const version = "0.1.3"
+const version = "0.1.4"
 
 func main() {
 	language, args, err := languageFromArgs(os.Args[1:])
@@ -96,6 +96,8 @@ func initialize(args []string, language i18n.Language, stdout io.Writer) error {
 	local := flags.String("local", "", "pasta local")
 	remote := flags.String("remote", "", "pasta remota")
 	interval := flags.Duration("interval", 1*time.Minute, "intervalo de verificação")
+	mode := flags.String("mode", config.ModeMonodirectional, "modo de sincronização (monodirectional|bidirectional)")
+	direction := flags.String("direction", config.DirectionLocalToRemote, "sentido da sincronização (local-to-remote|remote-to-local)")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -105,6 +107,8 @@ func initialize(args []string, language i18n.Language, stdout io.Writer) error {
 			LocalPath: *local,
 			Remote:    *remote,
 			Interval:  *interval,
+			Mode:      *mode,
+			Direction: *direction,
 		},
 	}
 	if err := config.SaveDefault(cfg); err != nil {
@@ -139,7 +143,15 @@ func doctor(language i18n.Language, w io.Writer) error {
 			return err
 		}
 	}
-	_, err = fmt.Fprintf(w, i18n.Text(language, i18n.KeyConfigValid), cfg.Sync.LocalPath, cfg.Sync.Remote)
+	modeKey := i18n.KeyModeMonodirectional
+	if cfg.Sync.EffectiveMode() == config.ModeBidirectional {
+		modeKey = i18n.KeyModeBidirectional
+	}
+	dirKey := i18n.KeyDirLocalToRemote
+	if cfg.Sync.EffectiveDirection() == config.DirectionRemoteToLocal {
+		dirKey = i18n.KeyDirRemoteToLocal
+	}
+	_, err = fmt.Fprintf(w, i18n.Text(language, i18n.KeyConfigValidDetailed), cfg.Sync.LocalPath, cfg.Sync.Remote, i18n.Text(language, modeKey), i18n.Text(language, dirKey))
 	return err
 }
 
